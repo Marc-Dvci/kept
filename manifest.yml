@@ -1,0 +1,186 @@
+app:
+  id: ari:cloud:ecosystem::app/cbb3b318-2937-4f3d-9693-136dcb987814
+  runtime:
+    name: nodejs24.x
+    memoryMB: 256
+    architecture: arm64
+  storage:
+    classifications:
+      - pii
+      - other
+    entities:
+      - name: promise
+        attributes:
+          version:
+            type: integer
+          data:
+            type: any
+          events:
+            type: any
+      - name: work
+        attributes:
+          version:
+            type: integer
+          data:
+            type: any
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - read:jira-user
+    - read:servicedesk-request
+    - storage:app
+    - write:object:jira
+    - read:object:jira
+    - delete:object:jira
+  content:
+    styles:
+      - unsafe-inline
+modules:
+  jira:issuePanel:
+    - key: kept-promise-panel
+      title: Kept
+      icon: resource:assets;icon.svg
+      resource: app
+      resolver:
+        function: resolver
+  jira:globalPage:
+    - key: kept-register
+      title: Kept
+      icon: resource:assets;icon.svg
+      resource: app
+      resolver:
+        function: resolver
+  jira:adminPage:
+    - key: kept-settings
+      title: Kept
+      resource: app
+      resolver:
+        function: resolver
+      useAsGetStarted: true
+  trigger:
+    - key: kept-issue-change
+      function: issue-change
+      events:
+        - avi:jira:updated:issue
+    - key: kept-planning-change
+      function: planning-change
+      events:
+        - avi:jira:updated:version
+        - avi:jira:released:version
+        - avi:jira-software:updated:sprint
+        - avi:jira-software:closed:sprint
+    - key: kept-public-reply
+      function: public-reply
+      events:
+        - avi:jira:commented:issue
+  graph:connector:
+    - key: kept-promises
+      name: Kept
+      icons:
+        light: resource:assets;icon.svg
+        dark: resource:assets;icon.svg
+      objectTypes:
+        - atlassian:document
+      capabilities:
+        replicatesPermissions: false
+        syncFidelity: upsert
+        supportsIncrementalSync: false
+      datasource:
+        onConnectionChange:
+          function: connection
+  action:
+    - key: kept-at-risk
+      name: Review customer promises
+      function: at-risk
+      actionVerb: GET
+      description: Read visible promises for a stable customer organisation ID, their deterministic risk assessment, sources and a reviewable follow-up draft. Never sends a message.
+      inputs:
+        customerId:
+          title: Customer organisation ID
+          type: string
+          required: true
+          description: Stable customer ID from Kept, not an email address.
+    - key: kept-evidence
+      name: Read promise evidence
+      function: evidence
+      actionVerb: GET
+      description: Read one promise, the original date, customer availability evidence and linked delivery observations. Read-only.
+      inputs:
+        promiseId:
+          title: Promise ID
+          type: string
+          required: true
+          description: Kept promise identifier beginning KPT-.
+    - key: kept-preview
+      name: Preview a release change
+      function: preview
+      actionVerb: GET
+      description: Read-only counterfactual showing visible promises affected by moving a shared release date. Does not alter Jira or customer commitments.
+      inputs:
+        workKey:
+          title: Jira delivery work key
+          type: string
+          required: true
+          description: A visible delivery work item linked to a promise.
+        releaseOn:
+          title: Proposed release date
+          type: string
+          required: true
+          description: ISO calendar date YYYY-MM-DD for the preview.
+  rovo:mcp:
+    - key: kept-mcp
+      name: Kept
+      tools:
+        - kept-at-risk
+        - kept-evidence
+        - kept-preview
+  rovo:skill:
+    - key: kept-review-skill
+      source:
+        dir: prompts/promise-review
+      dependencies:
+        tools:
+          - kept-at-risk
+          - kept-evidence
+          - kept-preview
+  rovo:agent:
+    - key: kept-follow-up
+      name: Kept
+      icon: resource:assets;icon.svg
+      description: Reviews customer commitments against Jira delivery evidence and prepares follow-up for a person to approve.
+      prompt: resource:prompts;agent.md
+      conversationStarters:
+        - Which promises to this customer need attention?
+        - What happens if this release moves by a week?
+        - Explain the evidence behind this promise's status.
+      actions:
+        - kept-at-risk
+        - kept-evidence
+        - kept-preview
+      skills:
+        - kept-review-skill
+  function:
+    - key: resolver
+      handler: index.handler
+    - key: issue-change
+      handler: index.onIssueUpdated
+    - key: planning-change
+      handler: index.onPlanningChanged
+    - key: public-reply
+      handler: index.onComment
+    - key: connection
+      handler: index.onConnectionChange
+    - key: at-risk
+      handler: index.promisesAtRisk
+    - key: evidence
+      handler: index.promiseEvidence
+    - key: preview
+      handler: index.previewRelease
+resources:
+  - key: app
+    path: static/app
+  - key: assets
+    path: static/assets
+  - key: prompts
+    path: prompts

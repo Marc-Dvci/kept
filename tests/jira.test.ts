@@ -1,0 +1,140 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const { request, setting } = vi.hoisted(() => ({
+  request: vi.fn(),
+  setting: vi.fn(),
+}));
+vi.mock("@forge/api", () => ({
+  default: {
+    asUser: () => ({ requestJira: request }),
+    asApp: () => ({ requestJira: request }),
+  },
+  route: (s: TemplateStringsArray, ...values: unknown[]) =>
+    s.reduce((a, b, n) => a + b + (values[n] ?? ""), ""),
+}));
+vi.mock("@forge/kvs", () => ({ kvs: { get: setting } }));
+import { readWork, readSource } from "../src/forge/jira";
+const now = "2026-11-02T10:00:00Z";
+const ok = (body: unknown) => ({
+  ok: true,
+  status: 200,
+  json: async () => body,
+});
+beforeEach(() => {
+  request.mockReset();
+  setting.mockReset();
+  setting.mockResolvedValue({
+    sprintField: "",
+    flagField: "",
+    captureProjects: [],
+  });
+});
+const issue = () => ({
+  self: "https://test.atlassian.net/rest/api/3/issue/101",
+  fields: {
+    summary: "Customer export",
+    status: { statusCategory: { key: "indeterminate" } },
+    resolution: null,
+    fixVersions: [
+      {
+        id: "v1",
+        name: "Atlas 2.8",
+        releaseDate: "2026-11-06",
+        released: false,
+        archived: false,
+      },
+    ],
+    updated: now,
+  },
+});
+describe("canonical Jira sources", () => {
+  it("retains the actual age of a still-valid blocked-state attestation", async () => {
+    request
+      .mockResolvedValueOnce(ok(issue()))
+      .mockResolvedValueOnce(
+        ok({ value: { blocked: false, observedAt: "2026-11-01T15:00:00Z" } }),
+      );
+    expect((await readWork("ATL-1", now)).observedAt).toBe(
+      "2026-11-01T15:00:00.000Z",
+    );
+  });
+  it("keeps blocked state unknown when no configured field or fresh attestation exists", async () => {
+    request
+      .mockResolvedValueOnce(ok(issue()))
+      .mockResolvedValueOnce({ ok: false, status: 404 });
+    expect((await readWork("ATL-1", now)).blocked).toBeNull();
+  });
+  it("uses the explicitly configured flag field", async () => {
+    setting.mockResolvedValue({
+      sprintField: "",
+      flagField: "customfield_10021",
+      captureProjects: [],
+    });
+    const b = issue();
+    Object.assign(b.fields, { customfield_10021: [] });
+    request.mockResolvedValueOnce(ok(b));
+    expect((await readWork("ATL-1", now)).blocked).toBe(false);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it("does not redate a stale blocked-state attestation", async () => {
+    request
+      .mockResolvedValueOnce(ok(issue()))
+      .mockResolvedValueOnce(
+        ok({ value: { blocked: false, observedAt: "2026-10-29T10:00:00Z" } }),
+      );
+    expect((await readWork("ATL-1", now)).blocked).toBeNull();
+  });
+  it("stops on an unavailable planning property rather than guessing unblocked", async () => {
+    request
+      .mockResolvedValueOnce(ok(issue()))
+      .mockResolvedValueOnce({ ok: false, status: 503 });
+    await expect(readWork("ATL-1", now)).rejects.toThrow("completely");
+  });
+  it("rejects an internal support reply before retaining its body", async () => {
+    request.mockResolvedValueOnce(
+      ok({ id: "100", public: false, body: "Internal instructions" }),
+    );
+    await expect(readSource("SUP-1", "100")).rejects.toThrow("public");
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it("rejects the customer's own comment as an outgoing commitment", async () => {
+    request
+      .mockResolvedValueOnce(
+        ok({
+          id: "100",
+          public: true,
+          body: "We will deliver by Friday.",
+          author: { accountId: "customer" },
+        }),
+      )
+      .mockResolvedValueOnce(ok({ reporter: { accountId: "customer" } }));
+    await expect(readSource("SUP-1", "100")).rejects.toThrow(
+      "Customer-authored",
+    );
+  });
+  it("retains current metadata so an edited source has a distinct fingerprint", async () => {
+    request
+      .mockResolvedValueOnce(
+        ok({
+          id: "100",
+          public: true,
+          body: "We will deliver by Friday, tracked in ATL-1.",
+          author: { accountId: "agent", displayName: "Support agent" },
+          createdDate: { iso8601: "2026-11-01T10:00:00Z" },
+        }),
+      )
+      .mockResolvedValueOnce(ok({ reporter: { accountId: "customer" } }))
+      .mockResolvedValueOnce(
+        ok({
+          self: "https://test.atlassian.net/rest/api/3/issue/SUP-1/comment/100",
+          created: "2026-11-01T10:00:00Z",
+          updated: now,
+        }),
+      )
+      .mockResolvedValueOnce({ ok: false, status: 404 });
+    const item = await readSource("SUP-1", "100");
+    expect(item.source.updatedAt).toBe(now.replace("Z", ".000Z"));
+    expect(item.source.body).toContain("ATL-1");
+    expect(item.suggestedKey).toBe("ATL-1");
+    expect(item.customer.name).toContain("Choose");
+  });
+});
