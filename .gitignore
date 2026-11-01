@@ -1,0 +1,10 @@
+node_modules/
+static/app/
+.local/
+.forge/
+.env*
+!.env.example
+test-results/
+playwright-report/
+coverage/
+*.log
