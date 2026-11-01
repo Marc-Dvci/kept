@@ -1,0 +1,60 @@
+{
+  "total": 36,
+  "correct": 36,
+  "matrix": {
+    "ON_TRACK": {
+      "ON_TRACK": 7,
+      "AT_RISK": 0,
+      "BROKEN": 0,
+      "KEPT": 0,
+      "UNKNOWN": 0,
+      "CANCELLED": 0
+    },
+    "AT_RISK": {
+      "ON_TRACK": 0,
+      "AT_RISK": 10,
+      "BROKEN": 0,
+      "KEPT": 0,
+      "UNKNOWN": 0,
+      "CANCELLED": 0
+    },
+    "BROKEN": {
+      "ON_TRACK": 0,
+      "AT_RISK": 0,
+      "BROKEN": 7,
+      "KEPT": 0,
+      "UNKNOWN": 0,
+      "CANCELLED": 0
+    },
+    "KEPT": {
+      "ON_TRACK": 0,
+      "AT_RISK": 0,
+      "BROKEN": 0,
+      "KEPT": 3,
+      "UNKNOWN": 0,
+      "CANCELLED": 0
+    },
+    "UNKNOWN": {
+      "ON_TRACK": 0,
+      "AT_RISK": 0,
+      "BROKEN": 0,
+      "KEPT": 0,
+      "UNKNOWN": 7,
+      "CANCELLED": 0
+    },
+    "CANCELLED": {
+      "ON_TRACK": 0,
+      "AT_RISK": 0,
+      "BROKEN": 0,
+      "KEPT": 0,
+      "UNKNOWN": 0,
+      "CANCELLED": 2
+    }
+  },
+  "failures": [],
+  "hashes": {
+    "eval/cases.json": "d28a24c3ec9ddf3785b0cfd333500dd3aed1ebcb7684edc90ebbc670bdb9513a",
+    "eval/secondary.json": "18233cc662fc6fd04a12c85036d212609d2a3fa22b335ddbf638e5f34b8fa18e"
+  },
+  "scope": "Authored synthetic forecast conformance cases, not a blind accuracy or customer-impact study."
+}

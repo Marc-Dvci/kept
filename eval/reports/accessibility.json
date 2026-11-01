@@ -1,0 +1,22 @@
+[
+  {
+    "section": "Promise register",
+    "violations": []
+  },
+  {
+    "section": "Capture inbox",
+    "violations": []
+  },
+  {
+    "section": "Change impact",
+    "violations": []
+  },
+  {
+    "section": "Activity",
+    "violations": []
+  },
+  {
+    "section": "Confirmation dialog",
+    "violations": []
+  }
+]

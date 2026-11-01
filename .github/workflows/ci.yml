@@ -1,0 +1,24 @@
+name: Verify Kept
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+      - run: npm ci --no-fund
+      - run: npm audit --audit-level=low
+      - run: npm run audit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          CI: 'true'
