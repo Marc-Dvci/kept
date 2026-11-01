@@ -12,9 +12,18 @@ import {
   admin,
   bounded,
   Inaccessible,
+  readScope,
 } from "../src/forge/access";
 beforeEach(() => request.mockReset());
 describe("Atlassian access boundary", () => {
+  it("checks a shared issue once within a request and checks it again in a new request", async () => {
+    request.mockResolvedValue({ ok: true });
+    const first = readScope({ accountId: "user" });
+    await Promise.all(Array.from({ length: 100 }, () => first("ATL-1")));
+    expect(request).toHaveBeenCalledTimes(1);
+    await readScope({ accountId: "user" })("ATL-1");
+    expect(request).toHaveBeenCalledTimes(2);
+  });
   it("refuses missing context identity", () =>
     expect(() => actor({})).toThrow("Sign in"));
   it("ignores a payload-supplied identity", () =>

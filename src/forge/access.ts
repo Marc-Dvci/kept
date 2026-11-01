@@ -23,6 +23,15 @@ export async function readable(key: string, context: Context) {
       `Jira access check failed (HTTP ${r.status}). The population could not be checked completely.`,
     );
 }
+/** Create once per resolver invocation; never retain permission results between requests. */
+export function readScope(context: Context) {
+  actor(context);
+  const checked = new Map<string, Promise<void>>();
+  return (key: string) => {
+    if (!checked.has(key)) checked.set(key, readable(key, context));
+    return checked.get(key)!;
+  };
+}
 export async function permission(name: string, key?: string) {
   const r = await api
     .asUser()

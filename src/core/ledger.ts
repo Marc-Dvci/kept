@@ -11,22 +11,9 @@ import {
   type Person,
 } from "./model";
 import { z } from "zod";
-export function canonical(value: unknown): string {
-  if (value === null || typeof value === "string" || typeof value === "boolean")
-    return JSON.stringify(value);
-  if (typeof value === "number" && Number.isFinite(value))
-    return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  if (typeof value === "object" && value !== null)
-    return `{${Object.keys(value)
-      .sort()
-      .map(
-        (k) =>
-          `${JSON.stringify(k)}:${canonical((value as Record<string, unknown>)[k])}`,
-      )
-      .join(",")}}`;
-  throw new Error("Evidence must be finite JSON data");
-}
+import { canonical } from "./json";
+import { validTransition } from "./transitions";
+export { canonical } from "./json";
 export async function hash(value: unknown) {
   const digest = await crypto.subtle.digest(
     "SHA-256",
@@ -57,7 +44,7 @@ export async function verify(record: RecordState): Promise<boolean> {
       return false;
     let previous = "0".repeat(64);
     let last = -Infinity;
-    const first = record.events[0]!.data;
+    let prior: PromiseRecord | undefined;
     for (const [i, event] of record.events.entries()) {
       const { hash: stored, ...body } = event;
       const data = promiseSchema.parse(event.data);
@@ -80,39 +67,8 @@ export async function verify(record: RecordState): Promise<boolean> {
         (await hash(body)) !== stored
       )
         return false;
-      if (
-        event.action === "promise.deliver" &&
-        (data.delivery?.actor !== event.actor ||
-          data.delivery.recordedAt !== event.at)
-      )
-        return false;
-      if (
-        event.action === "promise.cancel" &&
-        (data.cancellation?.actor !== event.actor ||
-          data.cancellation.at !== event.at)
-      )
-        return false;
-      if (
-        event.action === "promise.amend" &&
-        (data.amendments.at(-1)?.actor !== event.actor ||
-          data.amendments.at(-1)?.at !== event.at)
-      )
-        return false;
-      if (
-        data.id !== first.id ||
-        data.originalDueOn !== first.originalDueOn ||
-        canonical(data.source) !== canonical(first.source) ||
-        data.confirmedBy !== first.confirmedBy ||
-        data.confirmedAt !== first.confirmedAt
-      )
-        return false;
-      if (
-        i === 0 &&
-        (event.action !== "promise.confirmed" ||
-          data.confirmedBy !== event.actor ||
-          data.confirmedAt !== event.at)
-      )
-        return false;
+      if (!validTransition(prior, { ...event, data })) return false;
+      prior = data;
       previous = stored;
       last = Date.parse(event.at);
     }
@@ -148,6 +104,10 @@ async function event(
     previousHash: record?.events.at(-1)?.hash ?? "0".repeat(64),
     data: structuredClone(data),
   };
+  if (!validTransition(record?.data, body))
+    throw new Error(
+      "This action does not describe a valid evidence transition",
+    );
   return {
     version: body.sequence,
     data,

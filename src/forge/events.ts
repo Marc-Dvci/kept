@@ -33,20 +33,30 @@ export async function onIssueUpdated(event: {
   if (
     prior &&
     (Date.parse(prior.updatedAt) > Date.parse(observation.updatedAt) ||
-      Date.parse(prior.observedAt) > Date.parse(observation.observedAt))
+      Date.parse(prior.fetchedAt ?? prior.observedAt) >
+        Date.parse(observation.fetchedAt ?? observation.observedAt))
   )
     return;
   const eventId = await hash([
     key,
+    storedWork?.version ?? 0,
     observation.updatedAt,
     observation.versions,
     observation.blocked,
     observation.status,
+    observation.cancelled,
+    observation.sprint,
   ]);
   for (const record of linked) {
     for (let attempt = 0; attempt < 3; attempt++) {
       const fresh = await store.read(record.data.id);
-      if (!fresh) break;
+      if (
+        !fresh ||
+        fresh.data.delivery ||
+        fresh.data.cancellation ||
+        !fresh.data.workKeys.includes(key)
+      )
+        break;
       if (fresh.data.alerts.some((a) => a.id === eventId)) break;
       const others: Work[] = [];
       for (const other of fresh.data.workKeys.filter((k) => k !== key)) {
@@ -72,6 +82,7 @@ export async function onIssueUpdated(event: {
         "forge:issue-change",
         now,
       );
+      if (next === fresh) break;
       try {
         await store.save(next, fresh.version);
         break;
@@ -84,7 +95,9 @@ export async function onIssueUpdated(event: {
     const latest = await store.readWorkSnapshot(key);
     if (
       latest &&
-      Date.parse(latest.data.observedAt) > Date.parse(observation.observedAt)
+      (Date.parse(latest.data.updatedAt) > Date.parse(observation.updatedAt) ||
+        Date.parse(latest.data.fetchedAt ?? latest.data.observedAt) >
+          Date.parse(observation.fetchedAt ?? observation.observedAt))
     )
       return;
     try {
@@ -138,29 +151,36 @@ export async function onComment(event: {
     throw error;
   }
   // Discovery stores references only. Every view and confirmation re-reads as the user.
-  await kvs.set(`kept:source:${key}:${commentId}`, {
-    issueKey: key,
-    commentId,
-  });
+  await rememberSource(key, commentId);
 }
-export async function sourceReferences() {
-  const values: { issueKey: string; commentId: string }[] = [];
-  let cursor: string | undefined;
-  do {
-    const q = kvs
-      .query()
-      .where("key", WhereConditions.beginsWith("kept:source:"))
-      .limit(100);
-    const page = await (cursor ? q.cursor(cursor) : q).getMany<{
-      issueKey: string;
-      commentId: string;
-    }>();
-    values.push(...page.results.map((r) => r.value));
-    cursor = page.nextCursor;
-    if (values.length > 500)
-      throw new Error(
-        "Narrow the configured capture projects; the discovery population exceeds 500 references",
-      );
-  } while (cursor);
-  return values;
+export async function rememberSource(key: string, commentId: string) {
+  await kvs.set(
+    `kept:source:${key}:${commentId}`,
+    {
+      issueKey: key,
+      commentId,
+      expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+    },
+    { ttl: { value: 30, unit: "DAYS" } },
+  );
+}
+export async function sourceReferences(boundKey?: string, cursor?: string) {
+  const prefix = boundKey
+    ? `kept:source:${issueKey.parse(boundKey)}:`
+    : "kept:source:";
+  const query = kvs
+    .query()
+    .where("key", WhereConditions.beginsWith(prefix))
+    .limit(20);
+  const page = await (cursor ? query.cursor(cursor) : query).getMany<{
+    issueKey: string;
+    commentId: string;
+    expiresAt?: string;
+  }>();
+  return {
+    references: page.results
+      .map((r) => r.value)
+      .filter((r) => !r.expiresAt || Date.parse(r.expiresAt) > Date.now()),
+    cursor: page.nextCursor ?? null,
+  };
 }

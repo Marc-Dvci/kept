@@ -53,20 +53,27 @@ export async function readWork(
     .join(",");
   const caller = asApp ? api.asApp() : api.asUser();
   const r = await caller.requestJira(
-    route`/rest/api/3/issue/${key}?fields=${fields}`,
+    route`/rest/api/3/issue/${key}?fields=${fields}&expand=versionedRepresentations`,
   );
   if (r.status === 403 || r.status === 404)
     throw new Inaccessible("A linked delivery work item is unavailable");
   if (!r.ok)
     throw new Error(`Jira delivery observation failed (HTTP ${r.status})`);
-  const b = (await r.json()) as { fields: Record<string, any>; self: string };
+  const b = (await r.json()) as {
+    fields: Record<string, any>;
+    self: string;
+    versionedRepresentations?: Record<string, Record<string, unknown>>;
+  };
   const f = b.fields;
   let blocked: boolean | null = null;
   let observedAt = now;
   if (settings.flagField && Object.hasOwn(f, settings.flagField))
-    blocked = Array.isArray(f[settings.flagField])
-      ? f[settings.flagField].length > 0
-      : null;
+    blocked =
+      f[settings.flagField] === null
+        ? false
+        : Array.isArray(f[settings.flagField])
+          ? f[settings.flagField].length > 0
+          : null;
   if (blocked === null) {
     const property = await caller.requestJira(
       route`/rest/api/3/issue/${key}/properties/kept-planning`,
@@ -89,10 +96,34 @@ export async function readWork(
         "The blocked-state source could not be checked completely",
       );
   }
-  const sprints =
-    settings.sprintField && Array.isArray(f[settings.sprintField])
-      ? (f[settings.sprintField] as Record<string, any>[])
-      : [];
+  const rawSprint = settings.sprintField
+    ? (b.versionedRepresentations?.[settings.sprintField] ??
+      f[settings.sprintField])
+    : [];
+  if (settings.sprintField && rawSprint === undefined)
+    throw new Error(
+      "The configured sprint field is unavailable; its planning bound could not be checked.",
+    );
+  const representation =
+    rawSprint && !Array.isArray(rawSprint) && typeof rawSprint === "object"
+      ? (rawSprint["2"] ?? rawSprint)
+      : rawSprint;
+  const sprintValues = representation == null ? [] : representation;
+  const parsedSprints = z
+    .array(
+      z.object({
+        id: z.union([z.string(), z.number()]),
+        name: z.string(),
+        state: z.enum(["active", "future", "closed"]),
+        endDate: z.string().nullable().optional(),
+      }),
+    )
+    .safeParse(sprintValues);
+  if (!parsedSprints.success)
+    throw new Error(
+      "The configured sprint field has an unsupported representation; its planning bound could not be checked.",
+    );
+  const sprints = parsedSprints.data;
   const sprint = [...sprints]
     .filter((s) => s.state !== "closed")
     .sort(
@@ -130,6 +161,7 @@ export async function readWork(
       : null,
     updatedAt: normalized(f.updated),
     observedAt,
+    fetchedAt: now,
   });
 }
 export async function readSource(

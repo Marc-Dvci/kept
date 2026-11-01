@@ -9,6 +9,7 @@ import {
   readable,
   bounded,
   Inaccessible,
+  readScope,
   type Context,
 } from "./forge/access";
 import {
@@ -20,7 +21,7 @@ import {
 } from "./forge/jira";
 import * as store from "./forge/store";
 import { sync } from "./forge/graph";
-import { sourceReferences } from "./forge/events";
+import { sourceReferences, rememberSource } from "./forge/events";
 import { loadDemo } from "./forge/demo";
 import {
   confirm,
@@ -49,7 +50,11 @@ async function profile(context: Context) {
     name: ((await response.json()) as { displayName: string }).displayName,
   };
 }
-async function authorized(id: string, context: Context) {
+async function authorized(
+  id: string,
+  context: Context,
+  check = (key: string) => readable(key, context),
+) {
   actor(context);
   const record = await store.read(idSchema.parse(id));
   if (!record) throw new Inaccessible("This promise is unavailable");
@@ -65,18 +70,41 @@ async function authorized(id: string, context: Context) {
   for (const key of [
     ...new Set([record.data.source.issueKey, ...record.data.workKeys]),
   ])
-    await readable(key, context);
+    await check(key);
   if (!(await verify(record)))
     throw new Error("The stored promise evidence is inconsistent");
   return record;
 }
 async function visible(context: Context) {
-  return bounded(await store.keys(), (id) => authorized(id, context));
+  const check = readScope(context);
+  return bounded(await store.keys(), (id) => authorized(id, context, check));
 }
 async function observations(records: RecordState[], now: string) {
   const keys = [...new Set(records.flatMap((r) => r.data.workKeys))];
   // No stale cache can be presented as fresh Jira data. Permission failures become explicit gaps.
   return bounded(keys, (key) => readWork(key, now));
+}
+async function discovery(context: Context, cursor?: string) {
+  actor(context);
+  const page = await sourceReferences(context.extension?.issue?.key, cursor);
+  const sources = await bounded(page.references, async (s) => {
+    await readable(s.issueKey, context);
+    return readSource(s.issueKey, s.commentId);
+  });
+  const keys = [
+    ...new Set(
+      sources.flatMap(
+        (s) => s.source.body.match(/\b[A-Z][A-Z0-9_]*-\d+\b/g) ?? [],
+      ),
+    ),
+  ].slice(0, 100);
+  return {
+    sources,
+    sourceCursor: page.cursor,
+    works: await bounded(keys, (key) =>
+      readWork(key, new Date().toISOString()),
+    ),
+  };
 }
 resolver.define("bootstrap", async (req: Request) => {
   const who = await profile(req.context);
@@ -84,29 +112,23 @@ resolver.define("bootstrap", async (req: Request) => {
   const records = await visible(req.context);
   const works = await observations(records, now);
   const bound = req.context.extension?.issue?.key;
-  const sources = await bounded(
-    (await sourceReferences()).filter((s) => !bound || s.issueKey === bound),
-    async (s) => {
-      await readable(s.issueKey, req.context);
-      return readSource(s.issueKey, s.commentId);
-    },
-  );
-  const referencedKeys = [
-    ...new Set(
-      sources.flatMap(
-        (s) => s.source.body.match(/\b[A-Z][A-Z0-9_]*-\d+\b/g) ?? [],
-      ),
+  const {
+    sources,
+    sourceCursor,
+    works: discoveredWork,
+  } = await discovery(req.context);
+  works.push(
+    ...discoveredWork.filter(
+      (w) => !works.some((known) => known.key === w.key),
     ),
-  ]
-    .filter((key) => !works.some((w) => w.key === key))
-    .slice(0, 100);
-  works.push(...(await bounded(referencedKeys, (key) => readWork(key, now))));
+  );
   return {
     generation: "forge",
     version: 1,
     records,
     works,
     sources,
+    sourceCursor,
     now,
     actor: who,
     people: [
@@ -127,6 +149,9 @@ resolver.define("bootstrap", async (req: Request) => {
     graphStatus: await kvs.get("kept:graph-status"),
   };
 });
+resolver.define("discovery", async (req: Request) =>
+  discovery(req.context, z.string().min(1).max(4096).parse(req.payload.cursor)),
+);
 resolver.define("source", async (req: Request) => {
   const key = issueKey.parse(req.payload.issueKey);
   const commentId = z.string().regex(/^\d+$/).parse(req.payload.commentId);
@@ -143,10 +168,7 @@ resolver.define("source", async (req: Request) => {
     ].slice(0, 20),
     (workKey) => readWork(workKey, new Date().toISOString()),
   );
-  await kvs.set(`kept:source:${key}:${commentId}`, {
-    issueKey: key,
-    commentId,
-  });
+  await rememberSource(key, commentId);
   return { ...item, works };
 });
 resolver.define("confirm", async (req: Request) => {

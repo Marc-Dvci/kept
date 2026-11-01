@@ -207,6 +207,6 @@ export async function loadDemo(project: string, actor: Person, now: string) {
   return {
     created: count,
     disclaimer:
-      "Synthetic sources and planning observations. Verify genuine JSM public-reply capture separately.",
+      "Synthetic sources and planning observations. Verify actual JSM public-reply capture separately.",
   };
 }

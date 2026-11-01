@@ -203,26 +203,42 @@ export function preview(
       before: assess(promise, works, now),
       after: assess(promise, afterWorks, now),
     }));
-  const customers = [
-    ...new Map(
-      rows.map((r) => [r.promise.customer.id, r.promise.customer]),
-    ).values(),
-  ];
+  const grouped = new Map<string, PromiseRecord["customer"][]>();
+  for (const { promise: p } of rows)
+    grouped.set(p.customer.id, [
+      ...(grouped.get(p.customer.id) ?? []),
+      p.customer,
+    ]);
+  const conflicts = [...grouped.entries()].filter(
+    ([, entries]) =>
+      new Set(entries.map((c) => JSON.stringify([c.name, c.renewalOn]))).size >
+      1,
+  );
+  const customers = [...grouped.values()].map((entries) => ({
+    ...entries[0]!,
+    renewalOn:
+      new Set(entries.map((c) => JSON.stringify([c.name, c.renewalOn])))
+        .size === 1
+        ? entries[0]!.renewalOn
+        : null,
+  }));
   const today = Temporal.PlainDate.from(localDay(now, "Europe/Paris"));
   const end = today.add({ days: 60 }).toString();
   return {
     rows,
     afterWorks,
+    affectedWorkKeys: [...impactedKeys],
     affected: rows.length,
     customers: customers.length,
     newlyAtRisk: rows.filter(
-      (r) => r.before.state === "ON_TRACK" && r.after.state === "AT_RISK",
+      (r) => r.before.state !== "AT_RISK" && r.after.state === "AT_RISK",
     ).length,
     renewals: customers.filter(
       (c) =>
         c.renewalOn && c.renewalOn >= today.toString() && c.renewalOn <= end,
     ).length,
     unknownRenewals: customers.filter((c) => !c.renewalOn).length,
+    conflictingCustomers: conflicts.length,
     scope:
       "Visible confirmed promises only. A shared version change affects all linked delivery items in this observation set. Renewal window uses Paris calendar dates.",
   };

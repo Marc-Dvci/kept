@@ -48,26 +48,66 @@ const issue = () => ({
 });
 describe("canonical Jira sources", () => {
   it("reads Jira's documented versioned sprint representation", async () => {
-    setting.mockResolvedValue({ sprintField: "customfield_10020", flagField: "customfield_10021" });
+    setting.mockResolvedValue({
+      sprintField: "customfield_10020",
+      flagField: "customfield_10021",
+    });
     const b = {
       ...issue(),
-      fields: { ...issue().fields, customfield_10021: [], customfield_10020: ["legacy Sprint@1[state=ACTIVE]"] },
-      versionedRepresentations: { customfield_10020: { "2": [{ id: 7, name: "Delivery", state: "active", endDate: "2026-11-12T17:00:00Z" }] } },
+      fields: {
+        ...issue().fields,
+        customfield_10021: [],
+        customfield_10020: ["legacy Sprint@1[state=ACTIVE]"],
+      },
+      versionedRepresentations: {
+        customfield_10020: {
+          "2": [
+            {
+              id: 7,
+              name: "Delivery",
+              state: "active",
+              endDate: "2026-11-12T17:00:00Z",
+            },
+          ],
+        },
+      },
     };
     request.mockResolvedValueOnce(ok(b));
-    expect((await readWork("ATL-1", now)).sprint?.endAt).toBe("2026-11-12T17:00:00.000Z");
-    expect(request.mock.calls[0]![0]).toContain("expand=versionedRepresentations");
+    expect((await readWork("ATL-1", now)).sprint?.endAt).toBe(
+      "2026-11-12T17:00:00.000Z",
+    );
+    expect(request.mock.calls[0]![0]).toContain(
+      "expand=versionedRepresentations",
+    );
   });
   it("treats an explicitly returned empty checkbox as unflagged", async () => {
     setting.mockResolvedValue({ flagField: "customfield_10021" });
-    request.mockResolvedValueOnce(ok({ ...issue(), fields: { ...issue().fields, customfield_10021: null } }))
+    request
+      .mockResolvedValueOnce(
+        ok({
+          ...issue(),
+          fields: { ...issue().fields, customfield_10021: null },
+        }),
+      )
       .mockResolvedValueOnce({ ok: false, status: 404 });
     expect((await readWork("ATL-1", now)).blocked).toBe(false);
     expect(request).toHaveBeenCalledTimes(1);
   });
   it("stops on an unsupported sprint representation rather than omitting its bound", async () => {
-    setting.mockResolvedValue({ sprintField: "customfield_10020", flagField: "customfield_10021" });
-    request.mockResolvedValueOnce(ok({ ...issue(), fields: { ...issue().fields, customfield_10021: [], customfield_10020: ["legacy sprint"] } }));
+    setting.mockResolvedValue({
+      sprintField: "customfield_10020",
+      flagField: "customfield_10021",
+    });
+    request.mockResolvedValueOnce(
+      ok({
+        ...issue(),
+        fields: {
+          ...issue().fields,
+          customfield_10021: [],
+          customfield_10020: ["legacy sprint"],
+        },
+      }),
+    );
     await expect(readWork("ATL-1", now)).rejects.toThrow("sprint");
   });
   it("retains the actual age of a still-valid blocked-state attestation", async () => {

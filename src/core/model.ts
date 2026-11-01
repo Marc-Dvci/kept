@@ -69,6 +69,7 @@ export const workSchema = z.object({
     })
     .nullable(),
   observedAt: instant,
+  fetchedAt: instant.optional(),
   updatedAt: instant,
 });
 export const deliverySchema = z.object({

@@ -12,18 +12,47 @@ describe("frozen forecast cases", () => {
   });
 });
 describe("customer impact and calendar boundaries", () => {
+  it("keeps renewal totals uncertain when one customer ID has conflicting organisation names", async () => {
+    const records = (await seed()).slice(0, 2);
+    records[1]!.data.customer = {
+      ...records[0]!.data.customer,
+      name: "A different organisation",
+    };
+    const result = preview(
+      records.map((r) => r.data),
+      initialWork,
+      { workKey: "ATL-248", blocked: true },
+      REPLAY_NOW,
+    );
+    expect(result.conflictingCustomers).toBe(1);
+    expect(result.renewals).toBe(0);
+    expect(result.unknownRenewals).toBe(1);
+  });
   it("counts a risk established from previously incomplete evidence", () => {
     const f = makeRecord({ blocked: null });
-    const result = preview([f.promise], f.works, { workKey: "ATL-1", blocked: true }, f.now);
+    const result = preview(
+      [f.promise],
+      f.works,
+      { workKey: "ATL-1", blocked: true },
+      f.now,
+    );
     expect(result.rows[0]!.before.state).toBe("UNKNOWN");
     expect(result.rows[0]!.after.state).toBe("AT_RISK");
     expect(result.newlyAtRisk).toBe(1);
   });
   it("treats conflicting renewal dates as unknown regardless of record order", async () => {
     const records = (await seed()).slice(0, 2);
-    records[1]!.data.customer = { ...records[0]!.data.customer, renewalOn: "2027-06-01" };
+    records[1]!.data.customer = {
+      ...records[0]!.data.customer,
+      renewalOn: "2027-06-01",
+    };
     for (const input of [records, [...records].reverse()]) {
-      const result = preview(input.map((r) => r.data), initialWork, { workKey: "ATL-248", blocked: true }, REPLAY_NOW);
+      const result = preview(
+        input.map((r) => r.data),
+        initialWork,
+        { workKey: "ATL-248", blocked: true },
+        REPLAY_NOW,
+      );
       expect(result.customers).toBe(1);
       expect(result.renewals).toBe(0);
       expect(result.unknownRenewals).toBe(1);
