@@ -21,7 +21,9 @@
     "audit": "npm run typecheck && npm test && npm run eval && npm run build && npm run manifest",
     "format": "prettier --write src tests e2e eval scripts *.ts *.json manifest.yml",
     "deploy:forge": "tsx scripts/deploy.ts",
-    "verify:bundle": "node scripts/verify-bundle.mjs"
+    "verify:bundle": "node scripts/verify-bundle.mjs",
+    "register:forge": "tsx scripts/register.ts",
+    "prebuild": "node scripts/policies.mjs"
   },
   "dependencies": {
     "@forge/api": "8.4.0",

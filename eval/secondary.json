@@ -1,0 +1,68 @@
+[
+  {
+    "id": "later-second-work",
+    "patch": { "secondReleaseOn": "2026-11-20" },
+    "expected": "AT_RISK"
+  },
+  {
+    "id": "second-work-in-plan",
+    "patch": { "secondReleaseOn": "2026-11-05" },
+    "expected": "ON_TRACK"
+  },
+  {
+    "id": "blocked-without-date",
+    "patch": { "blocked": true, "releaseOn": null },
+    "expected": "AT_RISK"
+  },
+  {
+    "id": "future-observation",
+    "patch": { "observedAt": "2026-11-02T10:00:00Z" },
+    "expected": "UNKNOWN"
+  },
+  {
+    "id": "known-late-stale",
+    "patch": {
+      "observedAt": "2026-10-29T09:00:00Z",
+      "releaseOn": "2026-11-13"
+    },
+    "expected": "UNKNOWN"
+  },
+  {
+    "id": "delivered-on-last-instant",
+    "patch": {
+      "dueOn": "2026-10-31",
+      "deliveredAt": "2026-10-31T22:59:59.999Z"
+    },
+    "expected": "KEPT"
+  },
+  {
+    "id": "delivered-one-ms-late",
+    "patch": { "dueOn": "2026-10-31", "deliveredAt": "2026-10-31T23:00:00Z" },
+    "expected": "BROKEN"
+  },
+  {
+    "id": "done-after-due",
+    "patch": { "dueOn": "2026-10-31", "status": "done" },
+    "expected": "BROKEN"
+  },
+  {
+    "id": "no-planning-signals",
+    "patch": { "noVersions": true },
+    "expected": "UNKNOWN"
+  },
+  {
+    "id": "sprint-only",
+    "patch": { "noVersions": true, "sprintEnd": "2026-11-05T18:00:00Z" },
+    "expected": "ON_TRACK"
+  },
+  {
+    "id": "late-sprint-with-unknown-version",
+    "patch": { "releaseOn": null, "sprintEnd": "2026-11-08T18:00:00Z" },
+    "expected": "AT_RISK"
+  },
+  {
+    "id": "customer-cancelled",
+    "patch": { "cancelled": true, "missingWork": true },
+    "expected": "CANCELLED"
+  }
+]
