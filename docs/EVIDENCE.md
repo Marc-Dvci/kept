@@ -16,9 +16,17 @@ node scripts/verify-bundle.mjs kept-kpt-001-evidence.json RETAINED_SHA256
 ```
 
 Or use `npm run verify:bundle -- FILE RETAINED_SHA256`. Exit zero means the bundle,
-event links, original commitment metadata and current projection are consistent
+event links, allowed state transitions, original commitment metadata, action
+attribution and current projection are consistent
 with the independently retained digest. Omit the last argument for internal
 consistency only. A mismatched retained digest fails.
+
+An acknowledgment can review an alert; it cannot change a date or source. An
+amendment appends one agreement and retains the prior dates. A delivery or
+withdrawal closes the promise. Both the shared verifier and the independent
+Node verifier check these transition boundaries. Rehashing an invalid transition
+does not make it valid; an externally retained digest remains necessary to detect
+replacement with another internally consistent history.
 
 The verifier uses Node's crypto API and separate canonicalisation code, without
 importing the app ledger. It does not prove that a source figure is true, a person

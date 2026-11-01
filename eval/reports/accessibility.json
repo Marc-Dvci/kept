@@ -18,5 +18,33 @@
   {
     "section": "Confirmation dialog",
     "violations": []
+  },
+  {
+    "section": "Record customer delivery",
+    "violations": []
+  },
+  {
+    "section": "Prepare customer update",
+    "violations": []
+  },
+  {
+    "section": "Agreed date change",
+    "violations": []
+  },
+  {
+    "section": "Withdraw",
+    "violations": []
+  },
+  {
+    "section": "Review linked work and owner",
+    "violations": []
+  },
+  {
+    "section": "Open workspace settings",
+    "violations": []
+  },
+  {
+    "section": "Confirm synthetic change",
+    "violations": []
   }
 ]

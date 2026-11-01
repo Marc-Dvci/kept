@@ -21,7 +21,10 @@ by the explicit zero-spend policy. Synthetic checks are separate from runtime pr
 | Demo load                   | Actual created issue/version/comment counts; permission failures and retry result                                            |
 | Capture                     | Genuine public JSM comment, edited-source refusal, internal/customer comment refusal, confirmed customer/date/work/owner     |
 | Planning                    | Direct issue version reassignment, shared version-date update and sprint change; actual canonical observations               |
+| Native field formats        | Structured/versioned sprint data, configured empty flag, absent/malformed fields and property timestamp/fetch-time separation |
 | Alerts                      | One in-app alert per relevant change, correct owner, duplicate-event handling and review attribution                         |
+| Event recurrence            | Duplicate delivery yields one alert; later return to the same risky date yields a new occurrence; concurrent snapshots retain the newest data |
+| Discovery                   | More than one 20-reference page, request-bound scope, expiry, direct loading of older replies and current-user permissions |
 | Permission matrix           | Reader/editor/admin; hidden source; one hidden required work item; Rovo/MCP and export respect the same boundary             |
 | Concurrency                 | Two independent users write one version; one succeeds, one must refresh; delayed event cannot roll back current observations |
 | Customer delivery           | Done without availability proof remains at risk; timely evidence becomes kept; late delivery stays broken                    |

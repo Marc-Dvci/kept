@@ -12,6 +12,9 @@ import {
 import {
   sourceSchema,
   workSchema,
+  customerSchema,
+  personSchema,
+  instant,
   type Source,
   type Work,
   type Customer,
@@ -27,6 +30,7 @@ import {
   owners,
   customers,
 } from "../demo/data";
+import { z } from "zod";
 export const isForge =
   /\.atlassian-dev\.net$/.test(location.hostname) &&
   parent !== window &&
@@ -58,8 +62,33 @@ export type Workspace = {
   boundKey?: string;
   focusedId?: string;
   graphStatus?: { accepted: number; at: string };
+  sourceCursor?: string | null;
 };
 const KEY = "kept.replay.v1";
+export function replayBackup() {
+  return localStorage.getItem(KEY);
+}
+const replaySchema = z.object({
+  generation: z.uuid(),
+  version: z.number().int().min(1),
+  records: z.array(z.unknown()).max(500),
+  works: z.array(workSchema).max(10000),
+  sources: z
+    .array(
+      z.object({
+        source: sourceSchema,
+        customer: customerSchema,
+        suggestedKey: z.string(),
+        works: z.array(workSchema).optional(),
+      }),
+    )
+    .max(500),
+  now: instant,
+  actor: personSchema,
+  people: z.array(personSchema).max(1000),
+  customers: z.array(customerSchema).max(1000),
+  mode: z.literal("replay"),
+});
 function save(data: Workspace) {
   localStorage.setItem(KEY, JSON.stringify(data));
 }
@@ -68,15 +97,16 @@ export async function bootstrap(): Promise<Workspace> {
   const raw = localStorage.getItem(KEY);
   if (raw) {
     try {
-      const data = JSON.parse(raw) as Workspace;
+      const data = replaySchema.parse(JSON.parse(raw)) as Workspace;
       if (
-        !Array.isArray(data.records) ||
-        !Array.isArray(data.works) ||
-        !data.generation ||
-        !Number.isFinite(Date.parse(data.now))
+        new Set(data.records.map((r) => r?.data?.id)).size !==
+          data.records.length ||
+        new Set(data.works.map((w) => w.key)).size !== data.works.length ||
+        new Set(data.customers.map((c) => c.id)).size !==
+          data.customers.length ||
+        new Set(data.people.map((p) => p.id)).size !== data.people.length
       )
         throw new Error();
-      for (const work of data.works) workSchema.parse(work);
       for (const record of data.records)
         if (!(await verify(record))) throw new Error();
       return data;
@@ -155,7 +185,8 @@ export async function mutate(
 }
 export async function confirmPromise(
   input: Omit<Confirmation, "id" | "synthetic">,
-  expectedSourceHash?: string,
+  expectedSourceHash: string | undefined,
+  generation: string,
 ): Promise<Workspace> {
   if (isForge) {
     const result = await invoke<{ id: string }>("confirm", {
@@ -166,6 +197,10 @@ export async function confirmPromise(
   }
   return locked(async () => {
     const data = await bootstrap();
+    if (generation !== data.generation)
+      throw new Error(
+        "This workspace was reset in another session. Refresh before confirming a promise.",
+      );
     sourceSchema.parse(input.source);
     if (
       data.records.some(
@@ -231,7 +266,9 @@ export async function applySyntheticPlan(
         data.records[index]!,
         {
           id: `${eventId}:${row.promise.id}`,
-          workKey: change.workKey,
+          workKey: row.promise.workKeys.find((key) =>
+            result.affectedWorkKeys.includes(key),
+          )!,
           reason: row.after.reasons[0]!,
         },
         "replay:planning-event",
@@ -263,4 +300,12 @@ export async function loadSource(
   if (!isForge)
     throw new Error("Use the synthetic reply editor in replay mode");
   return invoke<InboxSource>("source", { issueKey: issue, commentId });
+}
+export async function loadMoreSources(cursor: string) {
+  if (!isForge) throw new Error("Discovery pages are available in Forge mode");
+  return invoke<{
+    sources: InboxSource[];
+    sourceCursor: string | null;
+    works: Work[];
+  }>("discovery", { cursor });
 }

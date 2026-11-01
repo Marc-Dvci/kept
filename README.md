@@ -1,6 +1,6 @@
 ![Kept customer promise register](docs/images/promise-register.png)
 
-![Tests](https://img.shields.io/badge/tests-98_passed-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Browser](https://img.shields.io/badge/browser_workflows-11_passed-234ee7) ![License](https://img.shields.io/badge/licence-MIT-24262c)
+![Tests](https://img.shields.io/badge/tests-120_passed-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Browser](https://img.shields.io/badge/browser_workflows-15_passed-234ee7) ![License](https://img.shields.io/badge/licence-MIT-24262c)
 
 **Kept connects a customer promise to the Jira work that must deliver it, so the owner can review the impact before a plan changes.**
 
@@ -8,12 +8,12 @@ I work in technology audit. I built the register to keep the original commitment
 
 |                |                                                                                                         |
 | -------------- | ------------------------------------------------------------------------------------------------------- |
-| Replay         | [Open Kept](https://marc-dvci.github.io/kept/) — no account needed                                      |
+| Replay         | [Open Kept](https://marc-dvci.github.io/kept/) : no account needed                                      |
 | Track          | Codegeist 2026 · Apps for Business Teams                                                                |
 | Working replay | TypeScript, React, Temporal, browser-local storage and Web Crypto                                       |
 | Native source  | Forge, Jira/JSM, conditional storage, event triggers, Teamwork Graph, Rovo agent/skill and MCP adapters |
 | Release state  | Replay available; native adapters await a billing-safe Forge installation and runtime verification      |
-| Measured       | 36/36 authored synthetic forecast cases; 98 tests; 11 browser workflows                                 |
+| Measured       | 36/36 authored synthetic forecast cases; 120 tests; 15 browser workflows                                 |
 
 Target-platform video and the judge installation link are tracked in the [release checklist](docs/RELEASE.md).
 
@@ -35,6 +35,8 @@ Target-platform video and the judge installation link are tracked in the [releas
 4. Record when the promised outcome was available to the customer, with a source URL and reviewed evidence. Jira Done alone cannot make a promise Kept.
 5. Record an agreed amendment. The original date stays in the history. Export the full evidence bundle and retain its digest separately.
 
+Use **Missed dates** for overdue promises. In **Activity**, filter by follow-up owner and review status. Customer drafts can be edited before copying; internal evidence references remain outside the message.
+
 ![Public reply capture](docs/images/capture-inbox.png)
 
 ![Shared release impact preview](docs/images/change-impact.png)
@@ -43,7 +45,7 @@ Target-platform video and the judge installation link are tracked in the [releas
 
 A customer success manager has a renewal call tomorrow. Engineering is moving a release today. The support reply, customer context and delivery plan live in different places, so the manager needs a precise answer: what did this customer hear, what work does it depend on, and what changed?
 
-Kept makes that a record. A proposed date requires confirmation. The original reply, date, timezone, customer identifier and owner remain attached to the work. Missing planning evidence stays visible, and a new plan does not silently rewrite the customer commitment.
+Kept makes that a record. A proposed date requires confirmation. The original reply, date, timezone, customer identifier and owner remain attached to the work. Missing planning evidence stays visible. A new plan keeps the customer commitment fixed.
 
 ## How it works
 
@@ -86,6 +88,8 @@ The adapters are implemented and schema-validated. Their actual permission, even
 
 Every confirmed promise retains its source snapshot. A source edit invalidates an unconfirmed proposal's fingerprint. Relative dates in edited replies require review. Date changes require customer agreement evidence, and the original date remains visible. Withdrawal also needs its own agreement and rationale; it cannot turn an already missed original obligation into a kept promise.
 
+Confirmation exposes the full public-reply snapshot retained in the record. Incomplete planning evidence stays explicit in customer drafts. Conflicting metadata for the same customer ID makes renewal totals uncertain. Native reply discovery is paged, with expiring references and direct loading for older comments.
+
 The evidence bundle contains full event snapshots, the current record and delivery observations. A [separate Node verifier](scripts/verify-bundle.mjs) can compare its digest with an independently retained value. Hashes check consistency; source truth and account authority require their underlying controls.
 
 ## Measurements
@@ -93,9 +97,9 @@ The evidence bundle contains full event snapshots, the current record and delive
 | Check                        | Result                                                                   | Reproduce              |
 | ---------------------------- | ------------------------------------------------------------------------ | ---------------------- |
 | Forecast corpus              | 36/36 authored synthetic cases: 24 primary plus 12 secondary             | `npm run eval`         |
-| Domain and adapter contracts | 98 passing tests                                                         | `npm test`             |
-| Browser workflows            | 11 passing workflows                                                     | `npm run test:browser` |
-| Accessibility                | No axe-core A/AA violations in the four sections and confirmation dialog | `npm run test:browser` |
+| Domain and adapter contracts | 120 passing tests                                                         | `npm test`             |
+| Browser workflows            | 15 passing workflows                                                     | `npm run test:browser` |
+| Accessibility                | No axe-core A/AA violations in four sections and eight action dialogs | `npm run test:browser` |
 | Mobile                       | No page overflow at 390 px in each section; settings and reset work      | `npm run test:browser` |
 | Dependency security          | Zero known advisories in the saved locked-dependency audit               | `npm audit`            |
 | Build and Forge schema       | Strict TypeScript, production build and offline manifest validation pass | `npm run audit`        |
@@ -116,6 +120,10 @@ The primary cases were committed before the engine. The secondary cases were aut
 | A stale browser session cannot overwrite a record         | `src/frontend/client.ts`                    | Two-page browser workflow                    |
 | Real customer promises cannot enter the synthetic graph   | `src/forge/graph.ts`                        | `graph.test.ts`                              |
 | Registration and metered deployment stay blocked          | `src/core/cost-policy.ts`                   | `cost-policy.test.ts`                        |
+| Repeated sprint/release risks remain distinct from duplicate event delivery | `src/forge/events.ts` | `events.test.ts` |
+| Evidence actions preserve the correct fields and attribution | `src/core/transitions.ts`, `scripts/verify-bundle.mjs` | `evidence-boundaries.test.ts` |
+| A partial plan cannot become a confident customer draft | `src/core/draft.ts` | `draft.test.ts` |
+| Damaged replay metadata can be downloaded and reset | `src/frontend/client.ts` | Browser recovery workflow |
 
 All replay customers, people, source replies, work and availability evidence are fictional. The shared decision code is real; native runtime evidence remains a release gate.
 

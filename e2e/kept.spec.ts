@@ -90,6 +90,9 @@ test("preview a shared release move, apply it and review internal alerts", async
   await page.getByRole("button", { name: "Confirm synthetic change" }).click();
   await page.getByRole("button", { name: /^Activity/ }).click();
   await expect(page.locator(".alert-row")).toHaveCount(3);
+  await expect(
+    page.locator(".alert-row").filter({ hasText: "Forma" }),
+  ).toContainText("ATL-251");
   await page
     .getByRole("button", { name: "Mark reviewed", exact: true })
     .first()
@@ -123,11 +126,18 @@ test("record actual delivery, copy a reviewable update and verify exported evide
   await expect(page.getByLabel("Reviewable update")).toContainText(
     "Customer availability was recorded",
   );
+  await page
+    .getByLabel("Reviewable update")
+    .fill(
+      "Hi Northstar, your workspace export is available. Morgan will follow up with you.",
+    );
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: "Copy reviewed draft" }).click();
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-    .toContain("Northstar");
+    .toBe(
+      "Hi Northstar, your workspace export is available. Morgan will follow up with you.",
+    );
   await page.getByRole("button", { name: "Close dialog" }).click();
   const pending = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export evidence bundle" }).click();
@@ -225,7 +235,7 @@ test("stale browser sessions cannot overwrite a more recent promise", async ({
   );
   await second.close();
 });
-test("accessibility across each section and confirmation dialog", async ({
+test("accessibility across each section and all action dialogs", async ({
   page,
 }) => {
   const reports = [];
@@ -249,6 +259,38 @@ test("accessibility across each section and confirmation dialog", async ({
   reports.push({
     section: "Confirmation dialog",
     violations: result.violations,
+  });
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("button", { name: "Promise register", exact: true })
+    .click();
+  for (const name of [
+    "Record customer delivery",
+    "Prepare customer update",
+    "Agreed date change",
+    "Withdraw",
+    "Review linked work and owner",
+    "Open workspace settings",
+  ]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    const check = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    reports.push({ section: name, violations: check.violations });
+    await page.getByRole("button", { name: "Close dialog" }).click();
+  }
+  await page
+    .getByRole("button", { name: "Change impact", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Apply synthetic plan", exact: true })
+    .click();
+  const planCheck = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  reports.push({
+    section: "Confirm synthetic change",
+    violations: planCheck.violations,
   });
   await mkdir("eval/reports", { recursive: true });
   await writeFile(
@@ -312,4 +354,123 @@ test("standalone replay uses no external services and rejects injected instructi
   ).toBeVisible();
   expect(external).toEqual([]);
   expect(exceptions).toEqual([]);
+});
+
+test("find a missed promise and focus the owner's unreviewed queue", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Missed dates", exact: true }).click();
+  await expect(page.locator(".register-table tbody tr")).toHaveCount(1);
+  await expect(page.locator(".register-table tbody tr")).toContainText("Orbit");
+  await page
+    .getByRole("button", { name: "Change impact", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Apply synthetic plan", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Confirm synthetic change" }).click();
+  await page.getByRole("button", { name: /^Activity/ }).click();
+  await page
+    .getByLabel("Follow-up owner", { exact: true })
+    .selectOption("replay:elliot");
+  await page.getByLabel("Review status").selectOption("unreviewed");
+  await expect(page.locator(".alert-row")).toHaveCount(1);
+  await expect(page.locator(".alert-row")).toContainText("Forma");
+  await page
+    .getByRole("button", { name: "Mark reviewed", exact: true })
+    .click();
+  await expect(page.locator(".alert-row")).toHaveCount(0);
+  await page.getByLabel("Review status").selectOption("reviewed");
+  await expect(page.locator(".alert-row")).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Change impact", exact: true })
+    .click();
+  await page.getByLabel("Planning decision").selectOption("blocked");
+  await expect(page.getByLabel("Delivery work").locator("option")).toHaveCount(
+    5,
+  );
+  await page.getByLabel("Delivery work").selectOption("ATL-237");
+  await expect(page.locator(".impact-table tbody tr")).toHaveCount(1);
+});
+
+test("damaged replay metadata stays recoverable through backup and reset", async ({
+  page,
+}) => {
+  for (const field of ["sources", "customers", "actor"]) {
+    await page.evaluate((field) => {
+      const saved = JSON.parse(localStorage.getItem("kept.replay.v1")!);
+      saved[field] = null;
+      localStorage.setItem("kept.replay.v1", JSON.stringify(saved));
+    }, field);
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "The workspace needs attention." }),
+    ).toBeVisible();
+    await expect(page.getByRole("alert")).toContainText("preserved");
+    await page
+      .getByRole("button", { name: "Open settings", exact: true })
+      .click();
+    const pending = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download saved replay" }).click();
+    const backup = JSON.parse(
+      await readFile((await (await pending).path())!, "utf8"),
+    );
+    expect(backup[field]).toBeNull();
+    await page
+      .getByRole("button", { name: "Reset replay", exact: true })
+      .click();
+    await expect(page.locator(".register-table tbody tr")).toHaveCount(8);
+  }
+});
+
+test("a stale capture cannot repopulate a workspace reset in another session", async ({
+  page,
+  context,
+}) => {
+  const second = await context.newPage();
+  await second.goto("./");
+  await second.getByRole("button", { name: "Capture a promise" }).click();
+  await second.getByRole("button", { name: "Review promise" }).first().click();
+  await page
+    .getByRole("button", { name: "Open workspace settings", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Reset replay", exact: true }).click();
+  await second
+    .getByRole("button", { name: "Confirm promise", exact: true })
+    .click();
+  await expect(second.getByRole("dialog").getByRole("alert")).toContainText(
+    "reset in another session",
+  );
+  await page.reload();
+  await expect(page.locator(".register-table tbody tr")).toHaveCount(8);
+  await second.close();
+});
+
+test("keyboard dialog focus returns and mobile promise selection reveals its evidence", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Prepare customer update" }).click();
+  for (let n = 0; n < 10; n++) {
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(
+        () => document.activeElement?.closest("dialog") !== null,
+      ),
+    ).toBe(true);
+  }
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Prepare customer update" }),
+  ).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .locator(".register-table")
+    .getByRole("button", { name: /Single sign-on/ })
+    .click();
+  const detail = page.getByRole("complementary", { name: "Selected promise" });
+  await expect(detail).toBeFocused();
+  await expect(
+    detail.getByRole("heading", { name: "Single sign-on", exact: true }),
+  ).toBeInViewport();
 });

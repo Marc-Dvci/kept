@@ -37,9 +37,9 @@ not evidence that a live install has been performed:
 4. Open Apps > Kept. An administrator opens Settings and chooses a **dedicated demo
    project**. Load synthetic demo creates five delivery issues, eight source issues,
    three demo versions and source comments. Retry markers preserve completed items.
-5. Verify a genuine public JSM comment through Capture inbox before claiming the
+5. Verify a actual public JSM comment through Capture inbox before claiming the
    support-source integration. Synthetic Jira comments used by the demo are explicitly
-   labelled demonstration records; they do not prove genuine customer communication.
+   labelled demonstration records; they do not prove actual customer communication.
 
 Creating demo versions requires project administration, and issue/comment creation
 requires the current user's corresponding Jira permissions. All demo owners use
@@ -54,11 +54,20 @@ under the caller's permissions. Alternatively, enter a JSM request key and publi
 comment ID in Capture inbox. Referenced Jira work is read as the user so known
 version names can inform the proposal.
 
+Discovery loads 20 references per page, scoped to the request when opened in an
+issue panel. Use **Load more public replies** to continue. References have a 30-day
+TTL and an explicit expiry check; an expired reference can be loaded directly
+again by request key/comment ID. Confirmed promise snapshots have separate
+retention and do not expire with discovery references.
+
 Internal comments, customer account comments and the request reporter's own replies
 are rejected. Other source authors still require the confirming operator to check
 the outgoing commitment and exact customer. An edited source has a different
 fingerprint and must be reloaded before confirmation. Relative dates in edited
 replies require explicit date review.
+The confirmation dialog exposes the full public reply that will be retained,
+including its author/time metadata. Review the complete snapshot under the
+organisation's data policy before confirming.
 
 Add or choose a stable customer organisation ID and name. An optional renewal date
 can be sourced through a `kept-customer` issue property:
@@ -93,10 +102,25 @@ Its timestamp must be current within 24 hours. Stale/future observations remain
 unknown. A property-access outage stops the check rather than inferring unblocked.
 Changing a date in a preview does not refresh unchanged evidence.
 
+The adapter requests Jira's versioned sprint representation and accepts modern
+structured fields. An unsupported or missing configured sprint field stops the
+check. A returned empty/null configured checkbox is unflagged; an absent or
+malformed field still needs an explicit observation. Fetch time is kept separate
+from the blocked-state attestation's age so a current plan is not discarded when
+that attestation is older.
+
 Issue changes, shared-version updates and sprint updates refresh managed promises
 and record deduplicated **in-app** owner alerts. This is not email or customer
 notification delivery. Current views also re-read Jira. Runtime event delivery,
 throttling and concurrency still require a protected live-site test.
+Repeated event delivery is deduplicated. A plan returning to a previously seen
+risky date is a new occurrence. Access checks for shared issues are deduplicated
+within one request and checked again in later requests.
+
+Use **Missed dates** in the register and filter **Activity** by owner/review status.
+Edit a prepared customer update before copying it. Internal references are shown
+separately. In replay mode, **Download saved replay** retains local data before a
+reset, including when validation reports damaged metadata.
 
 ## Agents, MCP and graph
 

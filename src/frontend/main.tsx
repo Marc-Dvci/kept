@@ -142,7 +142,37 @@ function Modal({
     };
   }, []);
   return (
-    <dialog ref={ref} aria-labelledby="modal-title" onCancel={close}>
+    <dialog
+      ref={ref}
+      aria-labelledby="modal-title"
+      onCancel={close}
+      onKeyDown={(e) => {
+        if (e.key !== "Tab" || e.ctrlKey || e.altKey || e.metaKey) return;
+        const items = [
+          ...e.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]',
+          ),
+        ].filter((item) => item.getClientRects().length > 0);
+        const first = items[0],
+          last = items.at(-1);
+        if (!first || !last) return;
+        if (
+          e.shiftKey &&
+          (document.activeElement === first ||
+            !e.currentTarget.contains(document.activeElement))
+        ) {
+          e.preventDefault();
+          last.focus();
+        } else if (
+          !e.shiftKey &&
+          (document.activeElement === last ||
+            !e.currentTarget.contains(document.activeElement))
+        ) {
+          e.preventDefault();
+          first.focus();
+        }
+      }}
+    >
       <div className="modal-head">
         <h2 id="modal-title">{title}</h2>
         <button className="icon" aria-label="Close dialog" onClick={close}>
@@ -160,6 +190,7 @@ function Modal({
 }
 function App() {
   const [app, setApp] = useState<client.Workspace | null>(null);
+  const inspectFocus = useRef(false);
   const [tab, setTab] = useState<Tab>("register");
   const [selected, setSelected] = useState("KPT-001");
   const [query, setQuery] = useState("");
@@ -196,6 +227,9 @@ function App() {
   const [planKey, setPlanKey] = useState("ATL-248");
   const [newDate, setNewDate] = useState("2026-11-13");
   const [planMode, setPlanMode] = useState<"release" | "blocked">("release");
+  const [draft, setDraft] = useState("");
+  const [activityOwner, setActivityOwner] = useState("all");
+  const [activityReview, setActivityReview] = useState("all");
   const [manual, setManual] = useState("");
   const [manualSource, setManualSource] = useState<Source | null>(null);
   const [newCustomerId, setNewCustomerId] = useState("");
@@ -221,9 +255,17 @@ function App() {
     .flatMap((record) => record.data.alerts.map((alert) => ({ alert, record })))
     .sort((a, b) => b.alert.at.localeCompare(a.alert.at));
   const unread = alerts.filter((a) => !a.alert.acknowledgedAt).length;
+  const filteredAlerts = alerts.filter(
+    ({ alert, record }) =>
+      (activityOwner === "all" || record.data.owner.id === activityOwner) &&
+      (activityReview === "all" ||
+        (activityReview === "reviewed") === !!alert.acknowledgedAt),
+  );
   const activeWorks =
-    app?.works.filter((w) =>
-      w.versions.some((v) => !v.archived && !v.released),
+    app?.works.filter(
+      (w) =>
+        planMode === "blocked" ||
+        w.versions.filter((v) => !v.archived && !v.released).length === 1,
     ) ?? [];
   const change: PlanChange = {
     workKey: planKey,
@@ -233,7 +275,7 @@ function App() {
   };
   let impact: ReturnType<typeof preview> | null = null;
   let impactError = "";
-  if (app && app.works.some((w) => w.key === planKey)) {
+  if (app && activeWorks.some((w) => w.key === planKey)) {
     try {
       impact = preview(
         records.map((r) => r.data),
@@ -297,6 +339,18 @@ function App() {
   async function refresh() {
     const data = await client.bootstrap();
     setApp(data);
+    if (!app && data.mode === "forge") {
+      const release = data.works
+        .flatMap((w) => w.versions)
+        .find((v) => !v.archived && !v.released);
+      setNewDate(
+        Temporal.PlainDate.from(
+          release?.releaseOn ?? localDay(data.now, "Europe/Paris"),
+        )
+          .add({ days: 7 })
+          .toString(),
+      );
+    }
     setPlanKey((key) =>
       data.works.some((w) => w.key === key) ? key : (data.works[0]?.key ?? ""),
     );
@@ -328,6 +382,17 @@ function App() {
     void task(refresh);
   }, []);
   useEffect(() => {
+    if (app && !activeWorks.some((w) => w.key === planKey))
+      setPlanKey(activeWorks[0]?.key ?? "");
+  }, [app, planMode, planKey]);
+  useEffect(() => {
+    if (tab !== "register" || !inspectFocus.current) return;
+    inspectFocus.current = false;
+    const detail = document.querySelector<HTMLElement>(".detail");
+    detail?.focus({ preventScroll: true });
+    if (window.innerWidth < 1100) detail?.scrollIntoView({ block: "start" });
+  }, [tab, selected]);
+  useEffect(() => {
     if (app?.mode !== "forge") return;
     const timer = setInterval(
       () => setApp((a) => (a ? { ...a, now: new Date().toISOString() } : a)),
@@ -345,6 +410,7 @@ function App() {
     setNotice("");
   };
   function inspect(record: RecordState) {
+    inspectFocus.current = true;
     setSelected(record.data.id);
     setTab("register");
     setNotice("");
@@ -357,6 +423,8 @@ function App() {
     setDueOn(promise?.dueOn ?? "");
     setWorkKeys(promise?.workKeys.join(", ") ?? "");
     setOwnerId(promise?.owner.id ?? "");
+    if (kind === "draft" && promise && app)
+      setDraft(customerDraft(promise, app.works, app.now));
     setError("");
     setModal(kind);
   }
@@ -537,10 +605,7 @@ function App() {
                   ? "The workspace needs attention."
                   : "Connecting the promise to the work."}
               </h1>
-              <button
-                className="secondary"
-                onClick={() => setModal("settings")}
-              >
+              <button className="secondary" onClick={openSettings}>
                 Open settings
               </button>
             </section>
@@ -650,6 +715,13 @@ function App() {
                       >
                         Needs evidence
                       </button>
+                      <button
+                        className={filter === "BROKEN" ? "chosen" : ""}
+                        aria-pressed={filter === "BROKEN"}
+                        onClick={() => setFilter("BROKEN")}
+                      >
+                        Missed dates
+                      </button>
                     </div>
                     <label className="search">
                       <Icon name="search" size={16} />
@@ -692,6 +764,9 @@ function App() {
                                   <span className="date-month">
                                     {dateText(p.dueOn).split(" ")[1]}
                                   </span>
+                                  <span className="date-year">
+                                    {p.dueOn.slice(0, 4)}
+                                  </span>
                                 </td>
                                 <td>
                                   <button
@@ -713,7 +788,7 @@ function App() {
                                   </span>
                                   <small className="renewal">
                                     {p.customer.renewalOn
-                                      ? `Renews ${dateText(p.customer.renewalOn).replace(" 2026", "")}`
+                                      ? `Renews ${dateText(p.customer.renewalOn)}`
                                       : "Renewal not recorded"}
                                   </small>
                                 </td>
@@ -742,7 +817,11 @@ function App() {
                       </div>
                     </section>
                     {promise && assessment && (
-                      <aside className="detail" aria-label="Selected promise">
+                      <aside
+                        className="detail"
+                        aria-label="Selected promise"
+                        tabIndex={-1}
+                      >
                         <div className="detail-kicker">
                           <span>{promise.id}</span>
                           <span className="detail-chip">
@@ -1078,6 +1157,66 @@ function App() {
                       );
                     })}
                   </section>
+                  {client.isForge && (
+                    <div className="discovery-controls">
+                      <p>
+                        Discovery loads 20 public replies at a time. References
+                        expire after 30 days; load an older reply directly by
+                        request key and comment ID.
+                      </p>
+                      {app.sourceCursor && (
+                        <button
+                          className="secondary"
+                          disabled={busy}
+                          onClick={() =>
+                            void task(async () => {
+                              const page = await client.loadMoreSources(
+                                app.sourceCursor!,
+                              );
+                              setApp((current) =>
+                                current
+                                  ? {
+                                      ...current,
+                                      sourceCursor: page.sourceCursor,
+                                      sources: [
+                                        ...new Map(
+                                          [
+                                            ...current.sources,
+                                            ...page.sources,
+                                          ].map((s) => [
+                                            `${s.source.issueKey}:${s.source.id}`,
+                                            s,
+                                          ]),
+                                        ).values(),
+                                      ],
+                                      works: [
+                                        ...new Map(
+                                          [...current.works, ...page.works].map(
+                                            (w) => [w.key, w],
+                                          ),
+                                        ).values(),
+                                      ],
+                                      customers: [
+                                        ...new Map(
+                                          [
+                                            ...current.customers,
+                                            ...page.sources.map(
+                                              (s) => s.customer,
+                                            ),
+                                          ].map((c) => [c.id, c]),
+                                        ).values(),
+                                      ],
+                                    }
+                                  : current,
+                              );
+                            })
+                          }
+                        >
+                          Load more public replies
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <section className="try-reply">
                     <div>
                       <span className="eyebrow">TRY ANOTHER REPLY</span>
@@ -1217,7 +1356,21 @@ function App() {
                       <select
                         id="plan-work"
                         value={planKey}
-                        onChange={(e) => setPlanKey(e.target.value)}
+                        onChange={(e) => {
+                          setPlanKey(e.target.value);
+                          const version = app.works
+                            .find((w) => w.key === e.target.value)
+                            ?.versions.find((v) => !v.archived && !v.released);
+                          setNewDate(
+                            Temporal.PlainDate.from(
+                              version?.releaseOn ??
+                                localDay(app.now, "Europe/Paris"),
+                            )
+                              .add({ days: 7 })
+                              .toString(),
+                          );
+                        }}
+                        disabled={!activeWorks.length}
                       >
                         {activeWorks.map((w) => (
                           <option key={w.key} value={w.key}>
@@ -1256,6 +1409,13 @@ function App() {
                       <Icon name="check" size={14} /> Read-only preview
                     </span>
                   </form>
+                  {!activeWorks.length && (
+                    <div className="empty">
+                      {planMode === "release"
+                        ? "A release preview needs linked work with exactly one unreleased version. Choose a blocking preview to review other work."
+                        : "Load a source reply and link its delivery work before previewing a change."}
+                    </div>
+                  )}
                   {impactError && (
                     <p className="error" role="alert">
                       {impactError}
@@ -1282,6 +1442,9 @@ function App() {
                             renew within 60 days.
                             {impact.unknownRenewals > 0
                               ? ` ${impact.unknownRenewals} renewal date(s) are unknown.`
+                              : ""}
+                            {impact.conflictingCustomers > 0
+                              ? ` ${impact.conflictingCustomers} customer ID(s) have conflicting metadata; reconcile them before relying on the totals.`
                               : ""}
                           </p>
                         </div>
@@ -1366,6 +1529,39 @@ function App() {
                     </div>
                     <span className="section-marker">03 / ACTIVITY</span>
                   </div>
+                  <div className="activity-controls">
+                    <div>
+                      <label htmlFor="activity-owner">Follow-up owner</label>
+                      <select
+                        id="activity-owner"
+                        value={activityOwner}
+                        onChange={(e) => setActivityOwner(e.target.value)}
+                      >
+                        <option value="all">All owners</option>
+                        {app.people.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                            {p.id === app.actor.id ? " (me)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="activity-review">Review status</label>
+                      <select
+                        id="activity-review"
+                        value={activityReview}
+                        onChange={(e) => setActivityReview(e.target.value)}
+                      >
+                        <option value="all">All alerts</option>
+                        <option value="unreviewed">Needs review</option>
+                        <option value="reviewed">Reviewed</option>
+                      </select>
+                    </div>
+                    <p>
+                      {filteredAlerts.length} of {alerts.length} alerts
+                    </p>
+                  </div>
                   {!alerts.length ? (
                     <div className="activity-empty">
                       <Icon name="check" size={30} />
@@ -1381,11 +1577,11 @@ function App() {
                         Preview a change <Icon name="arrow" />
                       </button>
                     </div>
-                  ) : (
-                    alerts.map(({ alert, record }) => (
+                  ) : filteredAlerts.length ? (
+                    filteredAlerts.map(({ alert, record }) => (
                       <article
                         className={`alert-row ${alert.acknowledgedAt ? "read" : ""}`}
-                        key={alert.id}
+                        key={`${record.data.id}:${alert.id}`}
                       >
                         <span className="alert-indicator" />
                         <div>
@@ -1431,6 +1627,10 @@ function App() {
                         </button>
                       </article>
                     ))
+                  ) : (
+                    <div className="empty">
+                      No alerts match this owner and review status.
+                    </div>
                   )}
                 </>
               )}
@@ -1470,6 +1670,17 @@ function App() {
             {capture.candidate.review.map((r) => (
               <p key={r}>{r}</p>
             ))}
+            <details className="source-snapshot">
+              <summary>
+                Review the full reply snapshot retained with this promise
+              </summary>
+              <p>{capture.source.body}</p>
+            </details>
+            <p>
+              Confirmation retains the full public reply and its author/time
+              metadata. Check that it is appropriate for the workspace's data
+              policy.
+            </p>
           </div>
           <form
             onSubmit={(e) => {
@@ -1497,6 +1708,7 @@ function App() {
                       .filter(Boolean),
                   },
                   await hash(capture.source),
+                  app.generation,
                 );
                 setApp(confirmed);
                 setSelected(
@@ -1876,9 +2088,23 @@ function App() {
             id="customer-draft"
             className="draft-text"
             rows={13}
-            readOnly
-            value={customerDraft(promise, app.works, app.now)}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
           />
+          <div className="draft-evidence">
+            <strong>Internal review references</strong>
+            <p>
+              These references stay outside the copied message. Check the
+              status, recipient and wording before sending.
+            </p>
+            <a href={promise.source.url} target="_blank" rel="noreferrer">
+              Original public reply ↗
+            </a>
+            <p>
+              Required work: {promise.workKeys.join(", ")}. Current assessment:{" "}
+              {STATE_LABELS[assessment!.state]}.
+            </p>
+          </div>
           <div className="modal-actions">
             <button className="secondary" onClick={close}>
               Close
@@ -1887,9 +2113,7 @@ function App() {
               className="primary"
               onClick={() =>
                 void task(async () => {
-                  await navigator.clipboard.writeText(
-                    customerDraft(promise, app.works, app.now),
-                  );
+                  await navigator.clipboard.writeText(draft);
                   setNotice(
                     "Draft copied. Review it before sending through your customer channel.",
                   );
@@ -2077,6 +2301,32 @@ function App() {
                   }
                 >
                   Advance one day
+                </button>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>Retain a local backup</strong>
+                  <small>
+                    Download saved replay data before a reset, including an
+                    unreadable saved workspace.
+                  </small>
+                </div>
+                <button
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    void task(async () => {
+                      const raw = client.replayBackup();
+                      if (!raw)
+                        throw new Error("There is no saved replay to download");
+                      download(raw, "kept-replay-backup.json");
+                      setNotice(
+                        "Saved replay downloaded. Keep it before resetting the workspace.",
+                      );
+                    })
+                  }
+                >
+                  Download saved replay
                 </button>
               </div>
               <div className="settings-row">
