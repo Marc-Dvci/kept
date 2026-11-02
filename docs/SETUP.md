@@ -1,156 +1,113 @@
 # Setup
 
-## Credential-free replay
+## Install
 
-Use a supported Node release, such as Node 24.22.1:
+Kept installs into Jira from the installation link in the [README](../README.md). You need a Jira administrator
+account, a Jira software project for releases and delivery work, and a Jira Service Management service project for
+customer requests, on the same site.
 
-```sh
-npm ci
-npm run dev
-# Open http://127.0.0.1:4185
-npm run audit
-npm run test:browser
-```
+1. Open the installation link, choose the site and approve the scopes.
+2. Open **Apps > Kept**. The settings open from **Workspace settings** in Kept's sidebar, and also from **Jira
+   settings > Apps > Kept**. Settings require Jira administrator permission.
 
-The replay opens with eight promises, six fictional customer organisations, five
-delivery work items and three public-reply proposals. Its fixed clock is 2 November
-2026 at 11:00 Paris. Settings can advance or reset it. No external account is needed.
-Local browser tests use installed Chrome; CI uses Playwright Chromium.
+## Load the demo
 
-```sh
-docker build -t kept .
-docker run --rm -p 4185:80 kept
-```
+In **Workspace settings**, under **Load the demo**:
 
-## Forge installation gate
+1. Choose the software project as **Delivery work project**.
+2. Choose the service project as **Support project (Jira Service Management)**.
+3. Click **Load synthetic demo**.
 
-Read [cost controls](COSTS.md) first. Registration and deployment are disabled until
-actual provider-backed zero-billing protection is verified. The manifest UUID is
-a placeholder, not a registered app. The following are the later release steps,
-not evidence that a live install has been performed:
+Kept creates the releases Atlas 2.7 (released), Atlas 2.8 and Atlas 2.9, five delivery work items, and a JSM
+request from each of six fictional customer organisations, each answered by an agent's public reply with a date.
+The demo dates are set relative to the day you load it, so Atlas 2.8 always falls four days later. Eight promises
+are confirmed and three replies wait in the **Capture inbox**. The loader also finds the site's Sprint and Flagged
+fields and adds the service project to the watched support projects.
 
-1. Establish an eligible exempt sandbox or enforced hard zero cap with provider
-   evidence, scope and expiry. Update the protection record only after verification.
-2. Install Forge CLI 15 separately, log in, then use `npm run register:forge`.
-3. Build, run `forge lint`, then use `npm run deploy:forge -- development` and install
-   to the protected Jira site. Development usage is metered on normal sites too.
-4. Open Apps > Kept. An administrator opens Settings and chooses a **dedicated demo
-   project**. Load synthetic demo creates five delivery issues, eight source issues,
-   three demo versions and source comments. Retry markers preserve completed items.
-5. Verify a actual public JSM comment through Capture inbox before claiming the
-   support-source integration. Synthetic Jira comments used by the demo are explicitly
-   labelled demonstration records; they do not prove actual customer communication.
+Forge resolvers stop at 25 seconds, so the loader works in steps: each call records what it created and the page
+calls again until the demo is complete. On the production site, loading the full demo took 37.7 to 41.5 s and
+**Reset the demo** 13.4 s.
 
-Creating demo versions requires project administration, and issue/comment creation
-requires the current user's corresponding Jira permissions. All demo owners use
-the authenticated installing account. No customer replies are posted by Kept's
-follow-up workflow.
+**Reset the demo** deletes the demo promises and their support requests. The Atlas work items and releases stay,
+and the next **Load synthetic demo** restores their dates, flags and statuses.
 
-## Public reply capture
+## Capture promises from replies
 
-Configure the allowed support project keys in Settings. Jira comment events store
-discovery references only. Every inbox view and confirmation re-reads the comment
-under the caller's permissions. Alternatively, enter a JSM request key and public
-comment ID in Capture inbox. Referenced Jira work is read as the user so known
-version names can inform the proposal.
+**Capture projects, separated by commas** in **Workspace settings** lists the support projects Kept watches. When
+an agent posts a public reply there, a Forge trigger stores a reference to it, and the reply appears in the
+**Capture inbox**. Every view and confirmation re-reads the reply as the signed-in user.
 
-Discovery loads 20 references per page, scoped to the request when opened in an
-issue panel. Use **Load more public replies** to continue. References have a 30-day
-TTL and an explicit expiry check; an expired reference can be loaded directly
-again by request key/comment ID. Confirmed promise snapshots have separate
-retention and do not expire with discovery references.
+Kept accepts only public replies written by agents. It reads the author's account type from Jira and refuses
+comments written by customers, internal comments and quoted lines. Dates written as "6 November 2026", "November
+6", ISO dates, "tomorrow" and weekdays are proposed; a release name or a quarter is flagged for the agent to set the
+exact date. An edited reply has a new fingerprint and must be reloaded before confirmation.
 
-Internal comments, customer account comments and the request reporter's own replies
-are rejected. Other source authors still require the confirming operator to check
-the outgoing commitment and exact customer. An edited source has a different
-fingerprint and must be reloaded before confirmation. Relative dates in edited
-replies require explicit date review.
-The confirmation dialog exposes the full public reply that will be retained,
-including its author/time metadata. Review the complete snapshot under the
-organisation's data policy before confirming.
+**Review promise** opens **Confirm the customer promise**: the exact public reply, **What was promised**,
+**Customer organisation**, **Follow-up owner**, **Customer-agreed date**, **Promise timezone** and **Required Jira
+work keys**. **Confirm promise** needs Edit Issues on the source request and read access to every linked work item.
+The owner is checked against active Atlassian accounts.
 
-Add or choose a stable customer organisation ID and name. An optional renewal date
-can be sourced through a `kept-customer` issue property:
+A request's customer organisation can be set with a `kept-customer` issue property:
 
 ```json
-{
-  "id": "customer-org-42",
-  "name": "Example organisation",
-  "renewalOn": "2026-12-01"
-}
+{ "id": "customer-org-42", "name": "Example organisation", "renewalOn": "2026-12-01" }
 ```
 
-This is operator-attested metadata, not a verified CRM integration. Never use the
-same ID for different organisations. Source visibility controls still apply.
+To load an older reply, enter its **JSM request key** and **Public comment ID** under the inbox. The inbox loads 20
+replies at a time; **Load more public replies** continues.
 
-Choose the owner from visible accounts or enter another Atlassian account ID; the
-server verifies that account and uses its canonical display name. Confirmation
-requires Edit Issues on the source and read access to every required work item.
+## Delivery work and states
 
-## Delivery observations
-
-Work status, fix versions and update time come from the current Jira issue. Map
-Sprint and Flagged custom field IDs in Settings; IDs vary by site. An unmapped or
-missing blocked state stays unknown. For integrations that cannot provide a flag,
-an explicitly attested `kept-planning` issue property is supported:
+For each required work item, Kept reads the status, fix versions and their release dates, the sprint and the
+Flagged field. **Sprint custom field ID** and **Flagged custom field ID** in **Workspace settings** hold the site's
+field IDs; the demo loader fills them in. Where the Flagged field is not available, a `kept-planning` issue
+property can carry the blocked state, with an observation time within the last 24 hours:
 
 ```json
-{ "blocked": false, "observedAt": "2026-11-01T10:00:00Z" }
+{ "blocked": false, "observedAt": "2026-11-02T10:00:00Z" }
 ```
 
-Its timestamp must be current within 24 hours. Stale/future observations remain
-unknown. A property-access outage stops the check rather than inferring unblocked.
-Changing a date in a preview does not refresh unchanged evidence.
+| State | Meaning |
+|---|---|
+| On track | Every required item is planned inside the promised date, unblocked, with current evidence |
+| At risk | A release or sprint ends after the promised date, or a required item is blocked |
+| Needs evidence | A required item has no planned date, or its evidence is missing or stale |
+| Broken | The date passed without the customer receiving the outcome |
+| Kept | Delivery evidence shows the customer received it in time |
+| Withdrawn | The customer agreed to withdraw the promise |
 
-The adapter requests Jira's versioned sprint representation and accepts modern
-structured fields. An unsupported or missing configured sprint field stops the
-check. A returned empty/null configured checkbox is unflagged; an absent or
-malformed field still needs an explicit observation. Fetch time is kept separate
-from the blocked-state attestation's age so a current plan is not discarded when
-that attestation is older.
+## Change impact and owner alerts
 
-Issue changes, shared-version updates and sprint updates refresh managed promises
-and record deduplicated **in-app** owner alerts. This is not email or customer
-notification delivery. Current views also re-read Jira. Runtime event delivery,
-throttling and concurrency still require a protected live-site test.
-Repeated event delivery is deduplicated. A plan returning to a previously seen
-risky date is a new occurrence. Access checks for shared issues are deduplicated
-within one request and checked again in later requests.
+**Change impact** previews a planning decision: choose the **Delivery work**, then **Move its shared release date**
+with a **Proposed release date**, or **Mark this work blocked**. The preview lists every promise that shares the
+release, its state before and after, the owner and the customers renewing within 60 days. It changes nothing.
 
-Use **Missed dates** in the register and filter **Activity** by owner/review status.
-Edit a prepared customer update before copying it. Internal references are shown
-separately. In replay mode, **Download saved replay** retains local data before a
-reset, including when validation reports damaged metadata.
+When a release, sprint or work item changes in Jira, Kept's triggers find the dependent promises, re-read the work
+from Jira and record an owner alert in **Activity** for each promise that falls at risk. Filter Activity by
+**Follow-up owner** and **Review status**, and click **Mark reviewed** once handled. **Prepare customer update**
+on a promise drafts a factual message from the Jira evidence to review and copy into the team's own channel.
 
-## Agents, MCP and graph
+## Delivery, changes and evidence
 
-The Rovo agent and reusable skill can read evidence, review a customer's promises
-and preview release changes. MCP exposes those three read-only actions. An admin
-must enable external tool access for the installation; use
-`https://mcp.atlassian.com/forge/<registered-app-id>`. Entitlement and actual calls
-are release checks. No agent action can confirm, amend, attest delivery or send.
+- **Record customer delivery** records when the customer could use the outcome, an evidence link and what was
+  checked. On time, the promise is Kept; late, it stays Broken.
+- **Agreed date change** records the new date with the customer's agreement; the original date and its outcome
+  stay in the history.
+- **Withdraw** needs the customer's agreement and a rationale.
+- **Review linked work and owner** corrects the work keys or the owner, with a reason.
+- **Export evidence bundle** downloads the full history; see [evidence verification](EVIDENCE.md).
 
-In Atlassian Administration > Connected apps > Kept > Connections, connect the graph
-connector. Settings can then sync the **synthetic** promise documents. Item-level
-ingestion acceptance is checked; accepted ingestion does not prove search indexing
-is complete. Workspace-wide ingestion of real promises is refused. Disconnecting
-removes the connector's graph data. Production ACL replication is outside this
-demonstration projection.
+## Teamwork Graph
 
-## Distribution and operational scope
+An organisation admin connects the connector in admin.atlassian.com: **Connected apps > Kept > View app details >
+Connections**, then **Connect** under "Teamwork Graph connectors". In **Workspace settings**, **Sync synthetic graph
+documents** writes the demo promises to Teamwork Graph as documents with the customer, the promise, the agreed
+date, the linked Jira work and the source link, and checks each item's ingestion result. Graph documents are
+visible across the workspace, so promises confirmed from live customer replies stay in Forge storage under Jira
+permissions.
 
-After verified production deployment, enable sharing and test the judge installation
-link from a fresh site. Marketplace submission has separate partner verification,
-agreement, security/privacy and review requirements. See the [release checklist](RELEASE.md).
+## Permissions
 
-The prototype's population guard is 500 managed promises/references per view. It
-does not claim institution-wide coverage or production throughput. Every required
-work item must be readable for a promise to be returned. Source and linked-work
-permission checks also protect Rovo, MCP, alerts and exports.
-
-Jira issue creation and Forge retry markers are not one distributed transaction.
-Simultaneous demo creation or a crash after Jira succeeds but before its marker is
-saved needs an operational reconciliation check. Promise writes and indexed work
-references use conditional storage transactions; work snapshots use version checks.
-Obsolete work index entries are revalidated before processing and cannot make a
-previously unlinked item affect the current promise.
+Every read runs as the signed-in user and returns a promise only when the user can see its source request and every
+linked work item. Writes also need Edit Issues on the source request. The actor always comes from the Forge context.
+Triggers read Jira as the app; viewing their alerts needs the same permissions as the promise.

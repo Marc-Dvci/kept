@@ -1,144 +1,202 @@
-![Kept customer promise register](docs/images/promise-register.png)
+# Kept: customer promises tied to the Jira work that delivers them
 
-![Tests](https://img.shields.io/badge/tests-120_passed-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Browser](https://img.shields.io/badge/browser_workflows-15_passed-234ee7) ![License](https://img.shields.io/badge/licence-MIT-24262c)
+![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
-**Kept connects a customer promise to the Jira work that must deliver it, so the owner can review the impact before a plan changes.**
+![Unit tests](https://img.shields.io/badge/unit_tests-121_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
-I work in technology audit. I built the register to keep the original commitment and its delivery evidence in view.
+**Kept turns the dates that support agents promise in Jira Service Management replies into tracked commitments,
+ties each one to the Jira work and release that must deliver it, and alerts the owner when a release moves, so the
+customer hears it from support before the date passes.**
 
-|                |                                                                                                         |
-| -------------- | ------------------------------------------------------------------------------------------------------- |
-| Replay         | [Open Kept](https://marc-dvci.github.io/kept/) : no account needed                                      |
-| Track          | Codegeist 2026 · Apps for Business Teams                                                                |
-| Working replay | TypeScript, React, Temporal, browser-local storage and Web Crypto                                       |
-| Native source  | Forge, Jira/JSM, conditional storage, event triggers, Teamwork Graph, Rovo agent/skill and MCP adapters |
-| Release state  | Replay available; native adapters await a billing-safe Forge installation and runtime verification      |
-| Measured       | 36/36 authored synthetic forecast cases; 120 tests; 15 browser workflows                                 |
+I audit for a living. Every promise in Kept has an owner, a source and delivery evidence.
 
-Target-platform video and the judge installation link are tracked in the [release checklist](docs/RELEASE.md).
+| | |
+|---|---|
+| Install | [Installation link](https://developer.atlassian.com/console/install/ed824ee8-f311-4683-b5da-5d5785e7ffd5?signature=AYABeM1oVtCN1GL620ym%2B%2BxFbv8AAAADAAdhd3Mta21zAEthcm46YXdzOmttczp1cy13ZXN0LTI6NzA5NTg3ODM1MjQzOmtleS83MDVlZDY3MC1mNTdjLTQxYjUtOWY5Yi1lM2YyZGNjMTQ2ZTcAuAECAQB4CxqLTo9l4lqXuFjNim1xJM%2Bp%2F3TVP9xHS2BrU5DRRucB8LWZAhiaPTac7g8FRIuYLwAAAH4wfAYJKoZIhvcNAQcGoG8wbQIBADBoBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDA%2BHFVjt7tgKXtBXdwIBEIA7c7aIwMQnOLf7NxdEZLV8UBbfEkE4inFdgDTtgfvFw6x3lFgg%2B3MB1Yp1hNjQB8wyZCr%2BAZ4an5OGPkgAB2F3cy1rbXMAS2Fybjphd3M6a21zOmV1LXdlc3QtMTo3MDk1ODc4MzUyNDM6a2V5LzQ2MzBjZTZiLTAwYzMtNGRlMi04NzdiLTYyN2UyMDYwZTVjYwC4AQICAHi9bVMAkme4qVQX1fQHo6ePw3H40A7cGfz7yrmSfBWMXgFsBbXC6iYHvJFHdb%2F5oH%2FuAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMmLL6AuBEWBuXeTGWAgEQgDv0ZFgqAoX8ui6fxdu%2BgHgoxG%2FraAFVlCvXOgBSqnA5c2Yc%2F8%2BOs%2FtZp1oMeukg1BzaJlCZtcH7ps%2FeqwAHYXdzLWttcwBLYXJuOmF3czprbXM6dXMtZWFzdC0xOjcwOTU4NzgzNTI0MzprZXkvNmMxMjBiYTAtNGNkNS00OTg1LWI4MmUtNDBhMDQ5NTJjYzU3ALgBAgIAeDYASx0XCjkny4iLV6vz%2BKtEGSGT6kdt0QRpkn6D%2FlVEATzfL5izvFttq61wiDDEC80AAAB%2BMHwGCSqGSIb3DQEHBqBvMG0CAQAwaAYJKoZIhvcNAQcBMB4GCWCGSAFlAwQBLjARBAwTwKviBDE6gvt6iGUCARCAO8%2FNE3QrkwPk8OZTywFeqtpfQriJLARZuX3FBNEwx%2FzlIPEVNNsuoI1elOmwiL%2F%2B6CqB5M7MMxnmtIsbAgAAAAAMAAAQAAAAAAAAAAAAAAAAAB1mNn6Vvd%2BeeuZN0mMQWjb%2F%2F%2F%2F%2FAAAAAQAAAAAAAAAAAAAAAQAAADLTDT0MHszz3H9VEW3JlBZwDRkl%2FfQchBGdqoS0HwSfPvYrJqy495Y845dqDY2q88REafTvT%2B9Q34PiZSfz5GYqrA4%3D&product=jira) (Jira Service Management and Jira) |
+| Track | Codegeist 2026 · Apps for Business Teams |
+| Bonus | Best Teamwork Graph integration |
+| Built with | Forge (Custom UI, resolvers, triggers, KVS custom entities, `graph:connector`), Jira Service Management, Jira, Teamwork Graph, TypeScript, React, Temporal |
+| Headline result | On the live site, moving the Atlas 2.8 release date in Jira recorded four owner alerts in Kept within 22 s; confirming a promise from a real JSM reply takes 5.0 s; 36 of 36 labelled forecast cases |
 
 ## For judges
 
-| Criterion                    | Evidence                                                                                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Technological implementation | [Forge manifest](manifest.yml), [authenticated resolvers](src/index.ts), [native adapters](src/forge), [setup](docs/SETUP.md)                    |
-| Design                       | Working desktop/mobile replay, [browser workflows](e2e/kept.spec.ts), [accessibility report](eval/reports/accessibility.json)                    |
-| Potential impact             | One customer success manager, a customer commitment and a product manager moving a shared release; real-user validation remains a release task   |
-| Innovation                   | Source-bound capture, retained original dates, missing-evidence states and a shared-release impact preview; [competitive scope](docs/SOURCES.md) |
-| Presentation                 | Actual product screenshots, source-to-delivery workflow, [measured forecast cases](eval/reports/forecast.json) and reproducible commands         |
+| Criterion | Where to look |
+|---|---|
+| Technological implementation | [`manifest.yml`](manifest.yml) (issue panel, global page, two admin pages, triggers on issue, comment, version and sprint events, KVS custom entities, Teamwork Graph connector), [`src/index.ts`](src/index.ts) resolvers, [`src/forge/`](src/forge) (access, Jira and JSM, events, storage, graph, demo), [live run](#run-live) |
+| Design | [See it work](#see-it-work), [the app](src/frontend/main.tsx) |
+| Potential impact | [The problem](#the-problem): only 13% of customers reported receiving any proactive customer service |
+| Innovation | [How it works](#how-it-works): promises captured from the agent's own words, tied to Jira releases, re-assessed by Jira's own events |
+| Presentation | [Evidence](#evidence), [claims](#claims), [sources](docs/SOURCES.md) |
 
 ## See it work
 
-1. Open **Capture inbox**. Review the public reply promising workspace export by 6 November. Confirm its customer, date, owner and delivery work.
-2. Open **Change impact**. Move Atlas 2.8 from 6 to 13 November. The initial eight-promise replay identifies four affected promises and three newly at risk. Confirming the new export promise first adds one affected, at-risk promise to those totals. The customer count uses stable organisation IDs.
-3. Apply the **synthetic** change. Activity contains internal alerts for the affected owners. Review a promise and prepare its customer update.
-4. Record when the promised outcome was available to the customer, with a source URL and reviewed evidence. Jira Done alone cannot make a promise Kept.
-5. Record an agreed amendment. The original date stays in the history. Export the full evidence bundle and retain its digest separately.
+You need, as a Jira administrator, a Jira software project and a Jira Service Management service project on the
+same site. The demo customers, people and replies are fictional.
 
-Use **Missed dates** for overdue promises. In **Activity**, filter by follow-up owner and review status. Customer drafts can be edited before copying; internal evidence references remain outside the message.
+1. Install with the installation link above. Open **Apps > Kept**, then **Workspace settings** in Kept's sidebar.
+   Under **Load the demo**, choose the software project as **Delivery work project** and the service project as
+   **Support project (Jira Service Management)**, then click **Load synthetic demo**. Kept creates the Atlas
+   releases, five delivery work items, and JSM requests from six customer organisations answered by public replies.
+2. The **Promise register** shows 8 confirmed promises across 6 organisations, each with its state, owner, agreed
+   date, the agent's original words and the work behind it.
+3. In **Capture inbox**, click **Review promise** on Basis's workspace-export reply, check the
+   customer, owner, date, timezone and work keys, and click **Confirm promise**. The replies that name a release or
+   a quarter are flagged for review.
+4. In **Change impact**, choose **Export every workspace, in one file**: the read-only preview shows every promise
+   that shares Atlas 2.8, before and after a one-week move.
+5. In Jira, open **Releases** in the software project and move **Atlas 2.8** one week later. Kept's **Activity**
+   shows an owner alert for each promise the move puts at risk.
+6. Open the work item **Export every workspace, in one file** and open **Kept** from its apps button: "3 customer
+   promises depend on" it.
+7. On a promise, **Record customer delivery**, **Agreed date change** and **Export evidence bundle** complete the
+   record. Connect the Teamwork Graph connector in admin.atlassian.com (**Connected apps > Kept > View app
+   details > Connections**) and click **Sync synthetic graph documents** in **Workspace settings**. **Reset the
+   demo** deletes the demo promises and requests so the scenario can be played again.
 
-![Public reply capture](docs/images/capture-inbox.png)
+Full steps: [docs/SETUP.md](docs/SETUP.md).
 
-![Shared release impact preview](docs/images/change-impact.png)
+| The reply in JSM | Capture inbox | Confirm the promise |
+|---|---|---|
+| ![A public agent reply in JSM promising the workspace export by 6 November 2026, tracked in ATL-1](docs/images/public-reply-in-jsm.png) | ![Proposals from public JSM replies; a release name or a quarter is flagged for review](docs/images/capture-inbox.png) | ![The agent confirms customer, owner, agreed date, timezone and Jira work](docs/images/confirm-promise.png) |
+
+| Change impact | Owner alerts after the Jira move | On the work item |
+|---|---|---|
+| ![Four promises newly at risk before Atlas 2.8 moves a week](docs/images/change-impact.png) | ![Four owner alerts recorded in Kept after Atlas 2.8 moved to 13 November](docs/images/owner-alerts.png) | ![The Kept panel on ATL-1: 3 customer promises depend on ATL-1](docs/images/issue-panel.png) |
+
+| Delivery evidence | Teamwork Graph sync | Workspace settings |
+|---|---|---|
+| ![A promise is Kept only with recorded customer delivery and its evidence](docs/images/delivery-evidence.png) | ![8 demo promise documents accepted by Teamwork Graph](docs/images/teamwork-graph-sync.png) | ![Settings: field mapping, capture projects, demo loader and reset](docs/images/workspace-settings.png) |
 
 ## The problem
 
-A customer success manager has a renewal call tomorrow. Engineering is moving a release today. The support reply, customer context and delivery plan live in different places, so the manager needs a precise answer: what did this customer hear, what work does it depend on, and what changed?
+![A support reply promises the workspace export by 6 November; Atlas 2.8 moves to 13 November, and nobody tells the customer](docs/images/problem.png)
 
-Kept makes that a record. A proposed date requires confirmation. The original reply, date, timezone, customer identifier and owner remain attached to the work. Missing planning evidence stays visible. A new plan keeps the customer commitment fixed.
+A support agent answers a customer in Jira Service Management: "We will deliver the workspace export by 6
+November, tracked in ATL-1." Two days later, engineering moves the release that carries ATL-1 to 13 November. The
+release lives in Jira, the promise lives in a reply, and nothing connects them. The customer finds out on 6
+November.
+
+Customers rarely hear first. In a Gartner survey of more than 6,000 customers, only 13% reported receiving any type
+of proactive customer service, and proactive service results in a full point increase in Net Promoter Score
+([Gartner, October 2020](https://www.gartner.com/en/newsroom/press-releases/2020-10-19-gartner-says-organizations-need-to-move-from-a-reacti)).
+A later Gartner survey of more than 4,800 customers found that proactive service raises a customer's value
+enhancement score by 9% ([CX Today on Gartner](https://www.cxtoday.com/loyalty-management/gartner-research-flawed-proactive-customer-service-does-more-harm-than-good)),
+and that 82% of B2B customers contact the company after receiving proactive outreach
+([destinationCRM on Gartner](https://www.destinationcrm.com/Articles/CRM-Insights/Insight/Consumers-Do-Contact-Customer-Service-After-Proactive-Outreach-152779.aspx)),
+so the message has to say exactly which promise moved and to when.
+
+Kept is for the support agents and customer success managers who make those promises, and the engineers whose
+release dates decide whether they are kept.
 
 ## How it works
 
+![Jira modules and events call Forge functions; one deterministic core with no model writes promises, alerts and graph documents](docs/images/architecture.png)
+
 ```mermaid
 flowchart LR
-  S[Public JSM reply] --> C[Date and version proposal]
-  C --> H[Human confirmation]
-  H --> P[Promise and original source]
-  J[Current Jira work and planning] --> F[Deterministic assessment]
-  P --> F
-  F --> I[Read-only change impact]
-  I --> A[Internal owner follow-up]
-  A --> D[Reviewed customer update]
-  H --> E[Versioned evidence history]
-  V[Customer availability attestation] --> E
-  E --> B[Bundle and retained digest]
-  R[Rovo and MCP read-only tools] --> F
+  R[Public JSM reply] --> P[Proposal in the Capture inbox]
+  P --> C[Agent confirms customer, owner, date, work]
+  C --> K[Promise with the original words]
+  J[Jira releases, sprints, status, Flagged] --> A[Deterministic assessment]
+  K --> A
+  V[Version, sprint and issue events] --> A
+  A --> O[Owner alert in Activity]
+  O --> U[Reviewed customer update]
+  E[Delivery evidence] --> K
+  K --> G[Teamwork Graph documents]
 ```
 
-Code proposes dates and computes risk. A person confirms the promise, records actual customer availability and reviews communication.
+- **Captured from the agent's own words.** Public replies in the watched support projects become proposals. Kept
+  checks that the comment is public and that its author is an agent (from the account type in Jira), so a
+  customer's own comment never becomes a promise. A release name or a quarter in place of a date is flagged for
+  review. An edited reply must be reviewed again before confirmation.
+- **Tied to the work.** Each promise lists the Jira work it needs. Kept reads each item's fix version and release
+  date, sprint, status and Flagged field, and assigns On track, At risk, Needs evidence, Broken or Kept, with the
+  reasons.
+- **Re-assessed when Jira changes.** Forge triggers on version, sprint and issue updates find the dependent
+  promises, re-read the canonical work from Jira, and record an owner alert when a promise newly falls at risk.
+  Repeated delivery of the same event records one alert.
+- **Previewed before the move.** Change impact shows every promise sharing a release, before and after a proposed
+  date, with owners and customers renewing within 60 days.
+- **Closed by evidence.** Jira Done does not close a promise. Customer delivery needs a time, an evidence link and
+  a note; an agreed new date keeps the original date and its outcome in the history.
+- **In the graph.** The demo promises sync to Teamwork Graph through a Forge graph connector, with the customer,
+  date, linked work and source link. Graph documents are workspace-visible, so promises confirmed from live customer
+  replies stay in Forge storage under Jira permissions.
 
-The forecast uses all required work items, their current release/sprint bounds, blocked state and observation age. A future plan beyond the commitment is **At risk**. A missed deadline without timely availability is **Broken**. **Kept** requires explicit delivery evidence. Incomplete or stale observations are **Needs evidence**. Withdrawal retains its evidence and original outcome.
+Code computes every proposal, state and alert. There is no model in the decision.
 
-## Atlassian integration
+## How Atlassian is used
 
-| Capability                       | Purpose in the implementation                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Jira panel and global page       | View promises from their source request or delivery work, or review the accessible population                         |
-| JSM public comments              | Re-read source visibility, body and current metadata before confirmation; reject internal/customer-originated sources |
-| Current-user Jira API            | Check source and every required work item, read current plans, validate owners and require Edit Issues for writes     |
-| Forge storage                    | Version-conditional promise writes, full event snapshots and indexed work-to-promise references                       |
-| Issue, version and sprint events | Re-read canonical planning data and record deduplicated in-app owner alerts                                           |
-| Teamwork Graph connector         | Project synthetic promise documents with source links; refuse real-customer workspace-wide ingestion                  |
-| Rovo agent and reusable skill    | Explain evidence and prepare reviewed follow-up using read-only actions                                               |
-| MCP                              | Read a customer's promises, inspect evidence and preview a release move; no writing or sending tool                   |
+| Product | How Kept uses it | Why |
+|---|---|---|
+| Jira Service Management | The JSM request API reads each public reply, its visibility and author; the demo raises real requests | The promise is made in the support reply |
+| Jira | `jira:issuePanel`, `jira:globalPage`, two `jira:adminPage` modules; releases, sprints, Flagged field; `mypermissions` on every read and write | The plan that decides the promise lives in Jira |
+| Forge | Custom UI and resolvers as the user; triggers on `avi:jira:updated:version`, `avi:jira:released:version`, sprint, issue and comment events; KVS custom entities `promise` and `work` with conditional transactions | No server of my own; Jira's events drive the alerts |
+| Teamwork Graph | `graph:connector` with a connection-change function; `setObjects` for the demo promises as `atlassian:document` objects | Customer commitments sit beside the work in the organisation's graph |
 
-The adapters are implemented and schema-validated. Their actual permission, event, graph, agent and installation behaviour still needs the protected-site checks in [RELEASE.md](docs/RELEASE.md).
+## Evidence
 
-## Review and evidence
+| Check | Result | Reproduce |
+|---|---|---|
+| Labelled forecast cases | 36/36: 24 written before the engine, 12 kept apart until it was complete | `npm run eval` |
+| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 121 passing | `npm test` |
+| Type check, production build, Forge manifest validation | clean | `npm run audit` |
 
-Every confirmed promise retains its source snapshot. A source edit invalidates an unconfirmed proposal's fingerprint. Relative dates in edited replies require review. Date changes require customer agreement evidence, and the original date remains visible. Withdrawal also needs its own agreement and rationale; it cannot turn an already missed original obligation into a kept promise.
+### Run live
 
-Confirmation exposes the full public-reply snapshot retained in the record. Incomplete planning evidence stays explicit in customer drafts. Conflicting metadata for the same customer ID makes renewal totals uncertain. Native reply discovery is paged, with expiring references and direct loading for older comments.
+Production install on marc-dvci.atlassian.net, 2 November 2026: software project "Atlas" (ATL) and service project
+"Atlas Support" (SUP).
 
-The evidence bundle contains full event snapshots, the current record and delivery observations. A [separate Node verifier](scripts/verify-bundle.mjs) can compare its digest with an independently retained value. Hashes check consistency; source truth and account authority require their underlying controls.
+| Action | Result | Time |
+|---|---|---|
+| Load the full demo | 8 confirmed promises across 6 organisations, 3 replies in the Capture inbox | 37.7 to 41.5 s |
+| Reset the demo | Demo promises and support requests deleted | 13.4 s |
+| Confirm a promise from a real JSM reply | Promise registered with its source, owner, date and work | 5.0 s |
+| Preview a one-week move of Atlas 2.8 | 4 promises newly at risk, 5 customers in scope, 3 renewing within 60 days | |
+| Move Atlas 2.8 to 13 November in Jira | 4 owner alerts recorded in Kept | 13.5 to 21.9 s, including page reloads |
+| Open the issue panel on ATL-1 | "3 customer promises depend on ATL-1" | |
+| Teamwork Graph sync | 8 demo promise documents accepted | 4.9 to 5.7 s |
 
-## Measurements
+![Kept in the Atlassian developer console: deployed to production, one installation, sharing on](docs/images/developer-console.png)
 
-| Check                        | Result                                                                   | Reproduce              |
-| ---------------------------- | ------------------------------------------------------------------------ | ---------------------- |
-| Forecast corpus              | 36/36 authored synthetic cases: 24 primary plus 12 secondary             | `npm run eval`         |
-| Domain and adapter contracts | 120 passing tests                                                         | `npm test`             |
-| Browser workflows            | 15 passing workflows                                                     | `npm run test:browser` |
-| Accessibility                | No axe-core A/AA violations in four sections and eight action dialogs | `npm run test:browser` |
-| Mobile                       | No page overflow at 390 px in each section; settings and reset work      | `npm run test:browser` |
-| Dependency security          | Zero known advisories in the saved locked-dependency audit               | `npm audit`            |
-| Build and Forge schema       | Strict TypeScript, production build and offline manifest validation pass | `npm run audit`        |
+## Claims
 
-The primary cases were committed before the engine. The secondary cases were authored before implementation, retained separately and first executed after the engine was built. Both are authored conformance sets, not an independent blind accuracy study. The report records case hashes. No measured time saving, churn reduction, customer adoption or production SLA is claimed.
-
-## Claims map
-
-| Claim                                                     | Code                                        | Test                                         |
-| --------------------------------------------------------- | ------------------------------------------- | -------------------------------------------- |
-| Jira Done does not prove customer availability            | `src/core/forecast.ts`                      | `done-is-not-delivery`                       |
-| A moved plan implies risk before the deadline             | `src/core/forecast.ts`                      | `late-release`, `equal-date`                 |
-| A preview preserves stale evidence age                    | `src/core/forecast.ts`                      | Stale blocked-evidence regression            |
-| Shared release impact includes every observed linked item | `src/core/forecast.ts`                      | `forecast.test.ts`                           |
-| Original dates and agreement evidence remain              | `src/core/ledger.ts`                        | `ledger.test.ts`, browser amendment workflow |
-| Public source text cannot choose the actor                | `src/forge/access.ts`, `src/core/ledger.ts` | Identity and command-attribution tests       |
-| API outages cannot look like a healthy empty population   | `src/forge/access.ts`, `src/forge/jira.ts`  | Permission/outage and property-source tests  |
-| A stale browser session cannot overwrite a record         | `src/frontend/client.ts`                    | Two-page browser workflow                    |
-| Real customer promises cannot enter the synthetic graph   | `src/forge/graph.ts`                        | `graph.test.ts`                              |
-| Registration and metered deployment stay blocked          | `src/core/cost-policy.ts`                   | `cost-policy.test.ts`                        |
-| Repeated sprint/release risks remain distinct from duplicate event delivery | `src/forge/events.ts` | `events.test.ts` |
-| Evidence actions preserve the correct fields and attribution | `src/core/transitions.ts`, `scripts/verify-bundle.mjs` | `evidence-boundaries.test.ts` |
-| A partial plan cannot become a confident customer draft | `src/core/draft.ts` | `draft.test.ts` |
-| Damaged replay metadata can be downloaded and reset | `src/frontend/client.ts` | Browser recovery workflow |
-
-All replay customers, people, source replies, work and availability evidence are fictional. The shared decision code is real; native runtime evidence remains a release gate.
+| Claim | Code | Test |
+|---|---|---|
+| A customer's own comment is never a promise | `src/forge/jira.ts` | `jira.test.ts` "rejects the customer's own comment as an outgoing commitment" |
+| Internal comments are refused | `src/forge/jira.ts`, `src/core/capture.ts` | "rejects an internal support reply before retaining its body", "refuses internal comments" |
+| A quarter never becomes an exact date | `src/core/capture.ts` | "does not invent an exact quarter date" |
+| A release without a date needs review | `src/core/capture.ts` | "requires a review for a version without a release date" |
+| An edited reply gets a new fingerprint | `src/forge/jira.ts` | "retains current metadata so an edited source has a distinct fingerprint" |
+| Jira Done is not delivery | `src/core/forecast.ts`, `src/core/ledger.ts` | case `done-is-not-delivery`; "requires evidence rather than a Done inference" |
+| A release later than the promise means risk | `src/core/forecast.ts` | cases `late-release`, `equal-date` |
+| A release move covers every item that shares it | `src/core/forecast.ts` | "includes every item sharing the changed release and counts stable customer IDs" |
+| Dates end at local midnight across daylight saving | `src/core/forecast.ts` | "uses the end of the local day through daylight-saving transitions" |
+| Repeated events record one alert | `src/forge/events.ts`, `src/core/ledger.ts` | "deduplicates repeat delivery but records a plan returning to a previously seen risk" |
+| A delayed event never replaces newer Jira data | `src/forge/events.ts` | "does not replace a newer Jira snapshot committed during alert processing" |
+| The actor comes from the Forge context | `src/forge/access.ts`, `src/core/ledger.ts` | "ignores a payload-supplied identity", "cannot choose an actor from a command payload" |
+| Writes need Edit Issues | `src/forge/access.ts` | "separately checks Edit Issues permission" |
+| An agreed change keeps the original date | `src/core/ledger.ts` | "retains the original commitment and customer agreement" |
+| The evidence bundle verifies without the app | `scripts/verify-bundle.mjs` | "supports independent Node-only verification against a retained digest" |
 
 ## Quickstart
 
+Install from the installation link above and follow [docs/SETUP.md](docs/SETUP.md).
+
+To build and deploy your own copy:
+
 ```sh
 npm ci
-npm run dev
-# http://127.0.0.1:4185
-npm run audit
-npm run test:browser
+npm run audit         # type check, unit tests, forecast cases, build, manifest validation
+forge register        # replaces the app id in manifest.yml
+npm run deploy        # vite build + forge deploy -e production
+forge install -e production
 ```
 
-See [setup](docs/SETUP.md), [evidence verification](docs/EVIDENCE.md), [privacy](docs/PRIVACY.md), [terms](docs/TERMS.md) and [cost controls](docs/COSTS.md).
+For an offline preview, `npm run dev` runs the same engine in the browser with the fictional Atlas team.
 
-`src/core` contains capture, assessment and evidence logic; `src/frontend` contains the desk and replay store; `src/forge` contains platform adapters; `eval` contains the authored cases and results. `manifest.yml` declares Forge infrastructure. The source is MIT licensed.
-
-English proposal recognition is bounded and requires human confirmation. Forecasts cover visible managed promises and depend on current configured observations. Follow-up alerts are in-app; there is no unattended deadline sweep or external communication. Production identity, retention, load testing, Marketplace review, live installation and target-platform film are tracked in the [release checklist](docs/RELEASE.md).
+`src/core` holds capture, assessment, drafts and the evidence ledger; `src/forge` the platform adapters and demo
+loader; `src/frontend` the app; `eval` the labelled cases. [Evidence verification](docs/EVIDENCE.md),
+[privacy](docs/PRIVACY.md), [terms](docs/TERMS.md) and [sources](docs/SOURCES.md). Date recognition reads English
+replies, and every proposal waits for a person to confirm it. MIT licensed.
