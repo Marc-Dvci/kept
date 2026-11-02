@@ -80,6 +80,45 @@ describe("canonical Jira sources", () => {
       "expand=versionedRepresentations",
     );
   });
+  it("reads the live response, which carries only versionedRepresentations", async () => {
+    // Shape returned by Jira Cloud for ?fields=...&expand=versionedRepresentations (captured 2 Nov 2026).
+    setting.mockResolvedValue({
+      sprintField: "customfield_10020",
+      flagField: "customfield_10021",
+      captureProjects: [],
+    });
+    request.mockResolvedValueOnce(
+      ok({
+        self: "https://test.atlassian.net/rest/api/3/issue/10163",
+        key: "ATL-1",
+        versionedRepresentations: {
+          summary: { "1": "Export every workspace, in one file" },
+          customfield_10020: { "1": null, "2": [] },
+          customfield_10021: { "1": [{ value: "Impediment" }] },
+          fixVersions: {
+            "1": [
+              {
+                id: "10000",
+                name: "Atlas 2.8",
+                archived: false,
+                released: false,
+                releaseDate: "2026-11-06",
+              },
+            ],
+          },
+          status: { "1": { statusCategory: { key: "new" } } },
+          resolution: { "1": null },
+          updated: { "1": now },
+        },
+      }),
+    );
+    const work = await readWork("ATL-1", now);
+    expect(work.title).toBe("Export every workspace, in one file");
+    expect(work.status).toBe("todo");
+    expect(work.blocked).toBe(true);
+    expect(work.versions[0]!.releaseOn).toBe("2026-11-06");
+    expect(work.sprint).toBeNull();
+  });
   it("treats an explicitly returned empty checkbox as unflagged", async () => {
     setting.mockResolvedValue({ flagField: "customfield_10021" });
     request
@@ -169,7 +208,7 @@ describe("canonical Jira sources", () => {
           author: { accountId: "customer" },
         }),
       )
-      .mockResolvedValueOnce(ok({ reporter: { accountId: "customer" } }));
+      .mockResolvedValueOnce(ok({ accountType: "customer" }));
     await expect(readSource("SUP-1", "100")).rejects.toThrow(
       "Customer-authored",
     );
@@ -185,7 +224,7 @@ describe("canonical Jira sources", () => {
           createdDate: { iso8601: "2026-11-01T10:00:00Z" },
         }),
       )
-      .mockResolvedValueOnce(ok({ reporter: { accountId: "customer" } }))
+      .mockResolvedValueOnce(ok({ accountType: "atlassian" }))
       .mockResolvedValueOnce(
         ok({
           self: "https://test.atlassian.net/rest/api/3/issue/SUP-1/comment/100",

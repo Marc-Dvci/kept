@@ -286,16 +286,18 @@ resolver.define("projects", async (req: Request) => {
     .asUser()
     .requestJira(route`/rest/api/3/project/search?maxResults=100`);
   if (!r.ok) throw new Error("Jira projects are unavailable");
-  return ((await r.json()) as { values: { key: string; name: string }[] })
-    .values;
+  return (
+    (await r.json()) as {
+      values: { key: string; name: string; projectTypeKey: string }[];
+    }
+  ).values;
 });
 resolver.define("loadDemo", async (req: Request) => {
   await admin(req.context);
+  const projectKey = z.string().regex(/^[A-Z][A-Z0-9_]*$/);
   return loadDemo(
-    z
-      .string()
-      .regex(/^[A-Z][A-Z0-9_]*$/)
-      .parse(req.payload.project),
+    projectKey.parse(req.payload.project),
+    req.payload.support ? projectKey.parse(req.payload.support) : null,
     await profile(req.context),
     new Date().toISOString(),
   );

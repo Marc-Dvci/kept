@@ -64,7 +64,15 @@ export async function readWork(
     self: string;
     versionedRepresentations?: Record<string, Record<string, unknown>>;
   };
-  const f = b.fields;
+  // With expand=versionedRepresentations Jira returns only versionedRepresentations, not fields.
+  const f: Record<string, any> =
+    b.fields ??
+    Object.fromEntries(
+      Object.entries(b.versionedRepresentations ?? {}).map(([k, v]) => [
+        k,
+        v["1"],
+      ]),
+    );
   let blocked: boolean | null = null;
   let observedAt = now;
   if (settings.flagField && Object.hasOwn(f, settings.flagField))
@@ -186,18 +194,16 @@ export async function readSource(
     throw new Inaccessible(
       "Only public outgoing support replies may be proposed",
     );
-  const request = await caller.requestJira(
-    route`/rest/servicedeskapi/request/${key}`,
+  // The JSM comment carries no account type; Jira's user record does. A customer's own words are never
+  // an outgoing commitment, whoever raised the request.
+  const authorId = String(b.author?.accountId ?? "");
+  const user = await caller.requestJira(
+    route`/rest/api/3/user?accountId=${authorId}`,
   );
-  if (!request.ok)
-    throw new Error("The support request's reporter could not be checked");
-  const requestData = (await request.json()) as {
-    reporter?: { accountId?: string };
-  };
-  if (
-    b.author?.accountType === "customer" ||
-    b.author?.accountId === requestData.reporter?.accountId
-  )
+  if (!user.ok) throw new Error("The reply's author could not be checked");
+  const accountType = ((await user.json()) as { accountType?: string })
+    .accountType;
+  if (accountType !== "atlassian")
     throw new Inaccessible(
       "Customer-authored requests are not outgoing support commitments",
     );

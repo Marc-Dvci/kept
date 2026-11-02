@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Temporal } from "@js-temporal/polyfill";
 import * as client from "./client";
 import { assess, preview, type PlanChange } from "../core/forecast";
-import { propose, type Candidate } from "../core/capture";
+import { propose, promiseTitle, type Candidate } from "../core/capture";
 import { customerDraft } from "../core/draft";
 import { hash, type RecordState } from "../core/ledger";
 import { localDay, type State, type Source } from "../core/model";
@@ -239,10 +239,21 @@ function App() {
   const [sourceKey, setSourceKey] = useState("");
   const [commentId, setCommentId] = useState("");
   const [project, setProject] = useState("");
-  const [projects, setProjects] = useState<{ key: string; name: string }[]>([]);
+  const [supportProject, setSupportProject] = useState("");
+  const [projects, setProjects] = useState<
+    { key: string; name: string; projectTypeKey?: string }[]
+  >([]);
   const [sprintField, setSprintField] = useState("");
   const [flagField, setFlagField] = useState("");
-  const records = app?.records ?? [];
+  const bound = app?.boundKey;
+  const allRecords = app?.records ?? [];
+  // In a work item or request panel, list only the promises tied to that item.
+  const records = bound
+    ? allRecords.filter(
+        (r) =>
+          r.data.workKeys.includes(bound) || r.data.source.issueKey === bound,
+      )
+    : allRecords;
   const row = records.find((r) => r.data.id === selected) ?? records[0];
   const promise = row?.data;
   const assessment =
@@ -278,7 +289,7 @@ function App() {
   if (app && activeWorks.some((w) => w.key === planKey)) {
     try {
       impact = preview(
-        records.map((r) => r.data),
+        allRecords.map((r) => r.data),
         app.works,
         change,
         app.now,
@@ -475,117 +486,148 @@ function App() {
         .includes(query.toLowerCase()),
   );
   return (
-    <div className="shell">
+    <div className={`shell${bound ? " bound" : ""}`}>
       <a className="skip" href="#main">
         Skip to content
       </a>
-      <aside className="sidebar">
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("register");
-          }}
-        >
-          <span className="brand-mark">
-            k<span>·</span>
-          </span>
-          <span>
-            kept<span className="brand-period">.</span>
-          </span>
-        </a>
-        <div className="workspace-label">
-          <span className="workspace-icon">A</span>
-          <span>
-            Atlas workspace
-            <small>
-              {app?.mode === "forge"
-                ? "Connected Jira site"
-                : "Fictional product team"}
-            </small>
-          </span>
-          <span className="chevron">⌄</span>
-        </div>
-        <div className="nav-label">CUSTOMER COMMITMENTS</div>
-        <nav aria-label="Main navigation">
-          {(Object.keys(TAB_NAMES) as Tab[]).map((key) => (
-            <button
-              key={key}
-              className={tab === key ? "active" : ""}
-              aria-current={tab === key ? "page" : undefined}
-              onClick={() => navigate(key)}
-            >
-              <Icon name={key} />
-              <span>{TAB_NAMES[key]}</span>
-              {key === "capture" && <small>{candidates.length}</small>}
-              {key === "activity" && unread > 0 && (
-                <small className="notification-count">{unread}</small>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-note">
-          <div className="small-check">
-            <Icon name="check" size={13} />
-          </div>
-          <p>
-            The promise is the date.
-            <br />
-            The work is the evidence.
-          </p>
-        </div>
-        <div className="sidebar-bottom">
-          <button className="sidebar-setting" onClick={openSettings}>
-            <Icon name="settings" /> Workspace settings
-          </button>
-          <div className="profile">
-            <span className="avatar dark">
-              {initials(app?.actor.name ?? "Morgan Lee")}
+      {!bound && (
+        <aside className="sidebar">
+          <a
+            className="brand"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("register");
+            }}
+          >
+            <span className="brand-mark">
+              k<span>·</span>
             </span>
             <span>
-              {app?.actor.name ?? "Loading workspace"}
+              kept<span className="brand-period">.</span>
+            </span>
+          </a>
+          <div className="workspace-label">
+            <span className="workspace-icon">
+              {app?.mode === "forge" ? "J" : "A"}
+            </span>
+            <span>
+              {app?.mode === "forge" ? "This Jira site" : "Atlas workspace"}
               <small>
                 {app?.mode === "forge"
-                  ? "Atlassian account"
-                  : "Customer success · demo"}
+                  ? "Promises across projects"
+                  : "Fictional product team"}
               </small>
             </span>
           </div>
-        </div>
-      </aside>
-      <div className="content">
-        <header className="topbar">
-          <div>
-            <span className="breadcrumb">Atlas</span>
-            <span className="crumb-slash">/</span>
-            <strong>{TAB_NAMES[tab]}</strong>
+          <div className="nav-label">CUSTOMER COMMITMENTS</div>
+          <nav aria-label="Main navigation">
+            {(Object.keys(TAB_NAMES) as Tab[]).map((key) => (
+              <button
+                key={key}
+                className={tab === key ? "active" : ""}
+                aria-current={tab === key ? "page" : undefined}
+                onClick={() => navigate(key)}
+              >
+                <Icon name={key} />
+                <span>{TAB_NAMES[key]}</span>
+                {key === "capture" && <small>{candidates.length}</small>}
+                {key === "activity" && unread > 0 && (
+                  <small className="notification-count">{unread}</small>
+                )}
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-note">
+            <div className="small-check">
+              <Icon name="check" size={13} />
+            </div>
+            <p>
+              The promise is the date.
+              <br />
+              The work is the evidence.
+            </p>
           </div>
-          <div className="top-right">
-            <span className="mode">
-              <i />
-              {app?.mode === "forge" ? "FORGE SITE" : "SYNTHETIC REPLAY"}
-            </span>
-            <span className="today">
-              {app ? timeText(app.now) : "Loading"} <small>PARIS</small>
-            </span>
-            <button
-              className="icon mobile-settings"
-              aria-label="Open workspace settings"
-              onClick={openSettings}
-            >
-              <Icon name="settings" size={15} />
+          <div className="sidebar-bottom">
+            <button className="sidebar-setting" onClick={openSettings}>
+              <Icon name="settings" /> Workspace settings
             </button>
+            <div className="profile">
+              <span className="avatar dark">
+                {initials(app?.actor.name ?? "Morgan Lee")}
+              </span>
+              <span>
+                {app?.actor.name ?? "Loading workspace"}
+                <small>
+                  {app?.mode === "forge"
+                    ? "Atlassian account"
+                    : "Customer success · demo"}
+                </small>
+              </span>
+            </div>
+          </div>
+        </aside>
+      )}
+      <div className="content">
+        {bound ? (
+          <nav className="panel-tabs" aria-label="Kept views">
+            {(Object.keys(TAB_NAMES) as Tab[]).map((key) => (
+              <button
+                key={key}
+                className={tab === key ? "active" : ""}
+                aria-current={tab === key ? "page" : undefined}
+                onClick={() => navigate(key)}
+              >
+                {TAB_NAMES[key]}
+                {key === "capture" && candidates.length > 0 && (
+                  <small>{candidates.length}</small>
+                )}
+              </button>
+            ))}
             <button
               className="icon refresh"
-              aria-label="Refresh workspace"
+              aria-label="Refresh"
               disabled={busy}
               onClick={() => void task(refresh)}
             >
               ↻
             </button>
-          </div>
-        </header>
+          </nav>
+        ) : (
+          <header className="topbar">
+            <div>
+              <span className="breadcrumb">
+                {app?.mode === "forge" ? "Kept" : "Atlas"}
+              </span>
+              <span className="crumb-slash">/</span>
+              <strong>{TAB_NAMES[tab]}</strong>
+            </div>
+            <div className="top-right">
+              <span className="mode">
+                <i />
+                {app?.mode === "forge" ? "FORGE SITE" : "SYNTHETIC REPLAY"}
+              </span>
+              <span className="today">
+                {app ? timeText(app.now) : "Loading"} <small>PARIS</small>
+              </span>
+              <button
+                className="icon mobile-settings"
+                aria-label="Open workspace settings"
+                onClick={openSettings}
+              >
+                <Icon name="settings" size={15} />
+              </button>
+              <button
+                className="icon refresh"
+                aria-label="Refresh workspace"
+                disabled={busy}
+                onClick={() => void task(refresh)}
+              >
+                ↻
+              </button>
+            </div>
+          </header>
+        )}
         <main id="main">
           {error && !modal && (
             <p className="message error" role="alert">
@@ -611,6 +653,27 @@ function App() {
             </section>
           ) : (
             <>
+              {tab === "register" && bound && (
+                <div className="panel-heading">
+                  <strong>
+                    {records.length === 0
+                      ? `No customer promise is tied to ${bound} yet.`
+                      : `${records.length} customer ${records.length === 1 ? "promise depends" : "promises depend"} on ${bound}`}
+                  </strong>
+                  <span>
+                    {new Set(records.map((r) => r.data.customer.id)).size}{" "}
+                    customer organisations ·{" "}
+                    {
+                      evaluated.filter((r) =>
+                        ["AT_RISK", "BROKEN", "UNKNOWN"].includes(
+                          r.result.state,
+                        ),
+                      ).length
+                    }{" "}
+                    need attention
+                  </span>
+                </div>
+              )}
               {tab === "register" && (
                 <>
                   <div className="page-heading">
@@ -1129,11 +1192,7 @@ function App() {
                                 ...item,
                                 customerId: item.customer.id,
                               });
-                              setTitle(
-                                item.candidate.excerpt
-                                  .replace(/^We (?:will |can )?/i, "")
-                                  .slice(0, 180),
-                              );
+                              setTitle(promiseTitle(item.candidate.excerpt));
                               setCustomerId(item.customer.id);
                               setDueOn(item.candidate.dueOn ?? "");
                               setWorkKeys(
@@ -2223,7 +2282,13 @@ function App() {
                 </button>
               </form>
               <hr />
-              <label htmlFor="demo-project">Dedicated demo project</label>
+              <h3>Load the demo</h3>
+              <p>
+                Creates the Atlas releases and delivery work in a software
+                project, and customer requests answered by a public reply in a
+                service project.
+              </p>
+              <label htmlFor="demo-project">Delivery work project</label>
               <select
                 id="demo-project"
                 value={project}
@@ -2236,12 +2301,36 @@ function App() {
                   </option>
                 ))}
               </select>
+              <label htmlFor="demo-support">
+                Support project (Jira Service Management)
+              </label>
+              <select
+                id="demo-support"
+                value={supportProject}
+                onChange={(e) => setSupportProject(e.target.value)}
+              >
+                <option value="">None: replies go in the work project</option>
+                {projects
+                  .filter((p) => p.projectTypeKey === "service_desk")
+                  .map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.key} · {p.name}
+                    </option>
+                  ))}
+              </select>
               <button
                 className="primary"
                 disabled={busy || !project}
                 onClick={() =>
                   void task(async () => {
-                    await client.invoke("loadDemo", { project });
+                    for (let step = 0; step < 12; step++) {
+                      const result = await client.invoke<{ done: boolean }>(
+                        "loadDemo",
+                        { project, support: supportProject || undefined },
+                      );
+                      if (result.done) break;
+                      setNotice("Creating the demo in Jira…");
+                    }
                     await refresh();
                     close();
                     setNotice(

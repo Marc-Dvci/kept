@@ -201,3 +201,16 @@ export function propose(
   }
   return candidates;
 }
+// "We will deliver the workspace export by 6 November 2026, tracked in ATL-1." -> "Workspace export"
+export function promiseTitle(excerpt: string) {
+  const core = excerpt
+    .replace(/^.*?\bwe(?: will|'ll| can)\s+/i, "")
+    .replace(/^(?:aim to|try to)\s+/i, "")
+    .replace(/^(?:deliver|ship|release|make|have|provide|add)\s+/i, "")
+    .replace(/[,.;].*$/, "")
+    .replace(/\s+(?:by|in|before|on|for|within|available)\b.*$/i, "")
+    .replace(/^(?:the|a|an|your)\s+/i, "")
+    .trim();
+  const title = core || excerpt;
+  return (title.charAt(0).toUpperCase() + title.slice(1)).slice(0, 180);
+}

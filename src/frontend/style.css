@@ -2326,3 +2326,64 @@ dialog > p,
     animation: none !important;
   }
 }
+/* Work item and request panels: no app chrome, compact heading. */
+.shell.bound {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+.shell.bound .page-heading,
+.shell.bound .metrics {
+  display: none;
+}
+.shell.bound main {
+  padding: 18px 4px 24px;
+}
+.panel-tabs {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding: 0 4px;
+}
+.panel-tabs > button {
+  border: 0;
+  background: none;
+  padding: 12px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted, #5b6474);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.panel-tabs > button.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+  font-weight: 600;
+}
+.panel-tabs > button small {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+.panel-tabs .refresh {
+  margin-left: auto;
+}
+.panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.panel-heading strong {
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+.panel-heading span {
+  color: var(--muted, #5b6474);
+  font-size: 13px;
+}

@@ -1,5 +1,5 @@
 app:
-  id: ari:cloud:ecosystem::app/cbb3b318-2937-4f3d-9693-136dcb987814
+  id: ari:cloud:ecosystem::app/ed824ee8-f311-4683-b5da-5d5785e7ffd5
   runtime:
     name: nodejs24.x
     memoryMB: 256
@@ -27,8 +27,10 @@ permissions:
   scopes:
     - read:jira-work
     - write:jira-work
+    - manage:jira-project
     - read:jira-user
     - read:servicedesk-request
+    - write:servicedesk-request
     - storage:app
     - write:object:jira
     - read:object:jira
@@ -58,6 +60,11 @@ modules:
       resolver:
         function: resolver
       useAsGetStarted: true
+    - key: kept-admin
+      title: Kept
+      resource: app
+      resolver:
+        function: resolver
   trigger:
     - key: kept-issue-change
       function: issue-change
@@ -94,7 +101,9 @@ modules:
       name: Review customer promises
       function: at-risk
       actionVerb: GET
-      description: Read visible promises for a stable customer organisation ID, their deterministic risk assessment, sources and a reviewable follow-up draft. Never sends a message.
+      description: Read visible promises for a stable customer organisation ID, their
+        deterministic risk assessment, sources and a reviewable follow-up draft.
+        Never sends a message.
       inputs:
         customerId:
           title: Customer organisation ID
@@ -105,7 +114,8 @@ modules:
       name: Read promise evidence
       function: evidence
       actionVerb: GET
-      description: Read one promise, the original date, customer availability evidence and linked delivery observations. Read-only.
+      description: Read one promise, the original date, customer availability evidence
+        and linked delivery observations. Read-only.
       inputs:
         promiseId:
           title: Promise ID
@@ -116,7 +126,9 @@ modules:
       name: Preview a release change
       function: preview
       actionVerb: GET
-      description: Read-only counterfactual showing visible promises affected by moving a shared release date. Does not alter Jira or customer commitments.
+      description: Read-only counterfactual showing visible promises affected by
+        moving a shared release date. Does not alter Jira or customer
+        commitments.
       inputs:
         workKey:
           title: Jira delivery work key
@@ -148,7 +160,8 @@ modules:
     - key: kept-follow-up
       name: Kept
       icon: resource:assets;icon.svg
-      description: Reviews customer commitments against Jira delivery evidence and prepares follow-up for a person to approve.
+      description: Reviews customer commitments against Jira delivery evidence and
+        prepares follow-up for a person to approve.
       prompt: resource:prompts;agent.md
       conversationStarters:
         - Which promises to this customer need attention?
