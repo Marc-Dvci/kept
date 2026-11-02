@@ -2341,6 +2341,24 @@ function App() {
               >
                 Load synthetic demo
               </button>
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() =>
+                  void task(async () => {
+                    const r = await client.invoke<{ removed: number }>(
+                      "resetDemo",
+                    );
+                    await refresh();
+                    close();
+                    setNotice(
+                      `${r.removed} demo promises and their Jira items deleted. Load the demo again to start over.`,
+                    );
+                  })
+                }
+              >
+                Reset the demo
+              </button>
               <hr />
               <button
                 className="secondary"

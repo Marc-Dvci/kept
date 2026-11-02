@@ -1,5 +1,5 @@
 import api, { route } from "@forge/api";
-import { kvs } from "@forge/kvs";
+import { kvs, WhereConditions } from "@forge/kvs";
 import { Temporal } from "@js-temporal/polyfill";
 import { releases, initialWork, customers } from "../demo/data";
 import {
@@ -9,7 +9,7 @@ import {
   type Source,
 } from "../core/model";
 import { confirm, apply } from "../core/ledger";
-import { save, read, readWorkSnapshot, saveWorkSnapshot } from "./store";
+import { save, read, keys, readWorkSnapshot, saveWorkSnapshot } from "./store";
 import { readWork, readSource, getSettings, settingsSchema } from "./jira";
 import { rememberSource } from "./events";
 
@@ -218,6 +218,17 @@ export async function loadDemo(
         ),
       ),
     );
+  if (!(await kvs.get(`kept:demo-plan-restored:${workProject}`))) {
+    for (const v of releases)
+      await call(route`/rest/api/3/version/${versionIds.get(v.id)!}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          releaseDate: v.releaseOn ? shift(v.releaseOn) : undefined,
+          released: v.released,
+        }),
+      });
+    await kvs.set(`kept:demo-plan-restored:${workProject}`, true);
+  }
   const workKeys = new Map<string, string>();
   for (const work of initialWork) {
     const key = await once(
@@ -247,6 +258,18 @@ export async function loadDemo(
     workKeys.set(work.key, key);
     const ready = `kept:demo-work-ready:${workProject}:${work.key}`;
     if (await kvs.get(ready)) continue;
+    // A reset keeps the work item; restore its planned blocked state.
+    if (settings.flagField)
+      await call(route`/rest/api/3/issue/${key}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          fields: {
+            [settings.flagField]: work.blocked
+              ? [{ value: "Impediment" }]
+              : null,
+          },
+        }),
+      });
     if (work.status === "done") {
       const issue = await call(route`/rest/api/3/issue/${key}?fields=status`);
       if (issue.fields?.status?.statusCategory?.key !== "done") {
@@ -458,4 +481,53 @@ ${contacts[customerIndex]}, ${customer.name}`,
     if (late()) return { done: false, created: count, inbox: 0 };
   }
   return { done: true, created: count, inbox: desk ? incoming.length : 0 };
+}
+
+async function byPrefix(prefix: string) {
+  const out: { key: string; value: unknown }[] = [];
+  let cursor: string | undefined;
+  do {
+    const q = kvs
+      .query()
+      .where("key", WhereConditions.beginsWith(prefix))
+      .limit(100);
+    const page = await (cursor ? q.cursor(cursor) : q).getMany();
+    out.push(...page.results);
+    cursor = page.nextCursor;
+  } while (cursor);
+  return out;
+}
+
+/** Deletes demo promises and the Jira work, releases and requests the loader created. */
+export async function resetDemo() {
+  let removed = 0;
+  for (const id of await keys()) {
+    const record = await read(id);
+    if (record && !record.data.synthetic) continue;
+    await kvs.entity("promise").delete(id);
+    await kvs.delete(`kept:index:${id}`);
+    for (const key of record?.data.workKeys ?? [])
+      await kvs.delete(`kept:linked:${key}:${id}`);
+    removed++;
+  }
+  // Support requests are deleted. The Atlas work items and releases are kept and restored on the next load,
+  // because Jira projects often withhold the Delete issues permission.
+  for (const m of await byPrefix("kept:demo-source:"))
+    await api
+      .asUser()
+      .requestJira(route`/rest/api/3/issue/${String(m.value)}`, {
+        method: "DELETE",
+      });
+  for (const m of await byPrefix("kept:demo-work:"))
+    await kvs.entity("work").delete(String(m.value));
+  for (const prefix of [
+    "kept:demo-source:",
+    "kept:demo-reply:",
+    "kept:demo-inbox:",
+    "kept:demo-work-ready:",
+    "kept:demo-plan-restored:",
+    "kept:source:",
+  ])
+    for (const m of await byPrefix(prefix)) await kvs.delete(m.key);
+  return { removed };
 }

@@ -22,7 +22,7 @@ import {
 import * as store from "./forge/store";
 import { sync } from "./forge/graph";
 import { sourceReferences, rememberSource } from "./forge/events";
-import { loadDemo } from "./forge/demo";
+import { loadDemo, resetDemo } from "./forge/demo";
 import {
   confirm,
   apply,
@@ -301,6 +301,10 @@ resolver.define("loadDemo", async (req: Request) => {
     await profile(req.context),
     new Date().toISOString(),
   );
+});
+resolver.define("resetDemo", async (req: Request) => {
+  await admin(req.context);
+  return resetDemo();
 });
 resolver.define("syncGraph", async (req: Request) => {
   await admin(req.context);
