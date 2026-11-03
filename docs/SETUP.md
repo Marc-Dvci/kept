@@ -28,8 +28,7 @@ Forge resolvers stop at 25 seconds, so the loader works in steps: each call reco
 calls again until the demo is complete. On the production site, loading the full demo took 37.7 to 41.5 s and
 **Reset the demo** 13.4 s.
 
-**Reset the demo** deletes the demo promises and their support requests. The Atlas work items and releases stay,
-and the next **Load synthetic demo** restores their dates, flags and statuses.
+**Reset the demo** removes synthetic promises and unused demo support requests. Promises confirmed through the real capture flow are retained, with their source requests and delivery plans. Unrelated live inbox references are preserved. Jira deletion failures retain retry markers. Atlas work items and releases stay; the next load restores only plans that are not protecting retained promises.
 
 ## Capture promises from replies
 
@@ -37,8 +36,9 @@ and the next **Load synthetic demo** restores their dates, flags and statuses.
 an agent posts a public reply there, a Forge trigger stores a reference to it, and the reply appears in the
 **Capture inbox**. Every view and confirmation re-reads the reply as the signed-in user.
 
-Kept accepts only public replies written by agents. It reads the author's account type from Jira and refuses
-comments written by customers, internal comments and quoted lines. Dates written as "6 November 2026", "November
+In **Approved support authors by project**, enter one `PROJECT=accountId, accountId` line for each watched service project. Only a Jira administrator can edit this list. Approve the accounts that actually send support commitments; a regular Atlassian account alone does not establish an agent role. The demo loader approves its installing author for the chosen service project.
+
+Kept accepts public replies only from these project-approved authors and rejects portal-only customer accounts. Internal comments and quoted lines are refused. Dates written as "6 November 2026", "November
 6", ISO dates, "tomorrow" and weekdays are proposed; a release name or a quarter is flagged for the agent to set the
 exact date. An edited reply has a new fingerprint and must be reloaded before confirmation.
 

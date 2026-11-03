@@ -25,6 +25,12 @@ export const settingsSchema = z.object({
     .array(z.string().regex(/^[A-Z][A-Z0-9_]*$/))
     .max(20)
     .default([]),
+  supportAgents: z
+    .record(
+      z.string().regex(/^[A-Z][A-Z0-9_]*$/),
+      z.array(z.string().trim().min(3).max(150)).max(100),
+    )
+    .default({}),
 });
 export const getSettings = async () =>
   settingsSchema.parse((await kvs.get("kept:settings")) ?? {});
@@ -206,6 +212,11 @@ export async function readSource(
   if (accountType !== "atlassian")
     throw new Inaccessible(
       "Customer-authored requests are not outgoing support commitments",
+    );
+  const settings = await getSettings();
+  if (!settings.supportAgents[key.split("-")[0]!]?.includes(authorId))
+    throw new Inaccessible(
+      "Only support authors approved for this service project can supply outgoing commitments. Ask a Jira administrator to configure the support authors.",
     );
   const metadata = await caller.requestJira(
     route`/rest/api/3/issue/${key}/comment/${commentId}`,

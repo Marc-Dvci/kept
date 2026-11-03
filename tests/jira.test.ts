@@ -214,6 +214,7 @@ describe("canonical Jira sources", () => {
     );
   });
   it("retains current metadata so an edited source has a distinct fingerprint", async () => {
+    setting.mockResolvedValue({ supportAgents: { SUP: ["agent"] } });
     request
       .mockResolvedValueOnce(
         ok({

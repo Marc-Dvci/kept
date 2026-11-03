@@ -1,11 +1,11 @@
 # Privacy
 
-Kept stores customer organisation identifiers and names, optional renewal dates, source reply snapshots, promise
+Kept stores project-approved support-author account IDs, customer organisation identifiers and names, optional renewal dates, source reply snapshots, promise
 dates, linked Jira keys, Atlassian account IDs, delivery evidence, owner alerts and revision history in the
 installing site's Forge app storage. It uses those records to assess delivery risk and to keep reviewed decisions.
 
 Reads require access to the source request and every linked delivery item. Writes also require Edit Issues on the
-source request. Source comments are re-read as the current user and must be public agent replies to be captured. A
+source request. Source comments are re-read as the current user and must be public replies from an author approved by the Jira administrator for that service project. Portal-only customer accounts are refused. A
 public JSM reply may still contain personal or commercially sensitive information; use the site's approved data
 policy. Confirmation keeps the full selected public reply, up to 12,000 characters, with its author and time and
 the exact promise excerpt. The confirmation dialog shows that snapshot before anything is saved.

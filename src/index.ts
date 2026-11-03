@@ -277,6 +277,15 @@ resolver.define("settings", async (req: Request) => {
 resolver.define("saveSettings", async (req: Request) => {
   await admin(req.context);
   const settings = settingsSchema.parse(req.payload);
+  const supportAuthors = [
+    ...new Set(Object.values(settings.supportAgents).flat()),
+  ];
+  for (let n = 0; n < supportAuthors.length; n += 5)
+    await Promise.all(
+      supportAuthors
+        .slice(n, n + 5)
+        .map((id) => validatePerson({ id, name: "Support author" })),
+    );
   await kvs.set("kept:settings", settings);
   return settings;
 });

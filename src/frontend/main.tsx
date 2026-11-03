@@ -236,6 +236,7 @@ function App() {
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newRenewal, setNewRenewal] = useState("");
   const [captureProjects, setCaptureProjects] = useState("");
+  const [supportAgents, setSupportAgents] = useState("");
   const [sourceKey, setSourceKey] = useState("");
   const [commentId, setCommentId] = useState("");
   const [project, setProject] = useState("");
@@ -383,10 +384,16 @@ function App() {
           sprintField: string;
           flagField: string;
           captureProjects: string[];
+          supportAgents: Record<string, string[]>;
         }>("settings");
         setSprintField(settings.sprintField);
         setFlagField(settings.flagField);
         setCaptureProjects(settings.captureProjects.join(", "));
+        setSupportAgents(
+          Object.entries(settings.supportAgents ?? {})
+            .map(([project, ids]) => `${project}=${ids.join(", ")}`)
+            .join("\n"),
+        );
       });
   }
   useEffect(() => {
@@ -2242,6 +2249,30 @@ function App() {
                         .split(",")
                         .map((p) => p.trim())
                         .filter(Boolean),
+                      supportAgents: Object.fromEntries(
+                        supportAgents
+                          .split(/\n/)
+                          .filter((line) => line.trim())
+                          .map((line) => {
+                            const separator = line.indexOf("=");
+                            if (separator < 1)
+                              throw new Error(
+                                "Use PROJECT=accountId, accountId for each support-author entry.",
+                              );
+                            return [
+                              line.slice(0, separator).trim().toUpperCase(),
+                              [
+                                ...new Set(
+                                  line
+                                    .slice(separator + 1)
+                                    .split(",")
+                                    .map((id) => id.trim())
+                                    .filter(Boolean),
+                                ),
+                              ],
+                            ];
+                          }),
+                      ),
                     });
                     setNotice("Jira field mapping saved.");
                     close();
@@ -2277,6 +2308,21 @@ function App() {
                   }
                   placeholder="SUP, HELP"
                 />
+                <label htmlFor="support-agents">
+                  Approved support authors by project
+                </label>
+                <textarea
+                  id="support-agents"
+                  rows={4}
+                  value={supportAgents}
+                  onChange={(e) => setSupportAgents(e.target.value)}
+                  placeholder="SUP=712020:account-id, another-account-id"
+                />
+                <p>
+                  One PROJECT=accountId, accountId entry per line. Approve only
+                  the agents who send commitments for that service project. The
+                  demo loader adds its installing author.
+                </p>
                 <button className="secondary" disabled={busy}>
                   Save field mapping
                 </button>
@@ -2323,14 +2369,22 @@ function App() {
                 disabled={busy || !project}
                 onClick={() =>
                   void task(async () => {
+                    let completed = false;
                     for (let step = 0; step < 12; step++) {
                       const result = await client.invoke<{ done: boolean }>(
                         "loadDemo",
                         { project, support: supportProject || undefined },
                       );
-                      if (result.done) break;
+                      if (result.done) {
+                        completed = true;
+                        break;
+                      }
                       setNotice("Creating the demo in Jira…");
                     }
+                    if (!completed)
+                      throw new Error(
+                        "Demo setup is still in progress. Click Load synthetic demo again to resume safely.",
+                      );
                     await refresh();
                     close();
                     setNotice(
@@ -2346,13 +2400,14 @@ function App() {
                 disabled={busy}
                 onClick={() =>
                   void task(async () => {
-                    const r = await client.invoke<{ removed: number }>(
-                      "resetDemo",
-                    );
+                    const r = await client.invoke<{
+                      removed: number;
+                      preserved: number;
+                    }>("resetDemo");
                     await refresh();
                     close();
                     setNotice(
-                      `${r.removed} demo promises and their Jira items deleted. Load the demo again to start over.`,
+                      `${r.removed} demo promises removed. ${r.preserved} retained promises keep their source requests and delivery plans. Load the demo again to continue.`,
                     );
                   })
                 }
@@ -2383,9 +2438,8 @@ function App() {
             <>
               <p>
                 This workspace uses fictional customers and a fixed Paris clock.
-                Evidence is saved only in this browser. The Forge deployment
-                gate remains locked until provider billing protection is
-                verified.
+                Evidence is saved only in this browser. Install the Forge app to
+                use your Jira work and public service-project replies.
               </p>
               <div className="settings-row">
                 <div>

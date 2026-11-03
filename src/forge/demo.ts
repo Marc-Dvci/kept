@@ -140,7 +140,7 @@ const contacts = [
   "Lena Fischer",
 ];
 
-async function configureFields(supportProject: string | null) {
+async function configureFields(supportProject: string | null, actor: Person) {
   const fields = (await call(route`/rest/api/3/field`)) as unknown as Json[];
   const sprintField =
     fields.find(
@@ -164,6 +164,19 @@ async function configureFields(supportProject: string | null) {
         ...(supportProject ? [supportProject] : []),
       ]),
     ],
+    supportAgents: {
+      ...settings.supportAgents,
+      ...(supportProject
+        ? {
+            [supportProject]: [
+              ...new Set([
+                ...(settings.supportAgents[supportProject] ?? []),
+                actor.id,
+              ]),
+            ],
+          }
+        : {}),
+    },
   });
   await kvs.set("kept:settings", next);
   return next;
@@ -178,7 +191,7 @@ export async function loadDemo(
   // Forge resolvers stop at 25 s. Each call does what fits in about 16 s; the page calls again until done.
   const started = Date.now();
   const late = () => Date.now() - started > 16000;
-  const settings = await configureFields(supportProject);
+  const settings = await configureFields(supportProject, actor);
   const info = await call(route`/rest/api/3/project/${workProject}`);
   const types = info.issueTypes as {
     id: string;
@@ -498,11 +511,21 @@ async function byPrefix(prefix: string) {
   return out;
 }
 
-/** Deletes demo promises and the Jira work, releases and requests the loader created. */
+/** Reset only demo-owned state; retained promises keep their sources and plans. */
 export async function resetDemo() {
   let removed = 0;
+  const protectedSources = new Set<string>();
+  const protectedWork = new Set<string>();
+  const records = [];
   for (const id of await keys()) {
     const record = await read(id);
+    records.push({ id, record });
+    if (record && !record.data.synthetic) {
+      protectedSources.add(record.data.source.issueKey);
+      for (const key of record.data.workKeys) protectedWork.add(key);
+    }
+  }
+  for (const { id, record } of records) {
     if (record && !record.data.synthetic) continue;
     await kvs.entity("promise").delete(id);
     await kvs.delete(`kept:index:${id}`);
@@ -512,22 +535,46 @@ export async function resetDemo() {
   }
   // Support requests are deleted. The Atlas work items and releases are kept and restored on the next load,
   // because Jira projects often withhold the Delete issues permission.
-  for (const m of await byPrefix("kept:demo-source:"))
-    await api
+  for (const m of await byPrefix("kept:demo-source:")) {
+    const key = String(m.value);
+    if (protectedSources.has(key)) continue;
+    const response = await api
       .asUser()
-      .requestJira(route`/rest/api/3/issue/${String(m.value)}`, {
+      .requestJira(route`/rest/api/3/issue/${key}`, {
         method: "DELETE",
       });
-  for (const m of await byPrefix("kept:demo-work:"))
-    await kvs.entity("work").delete(String(m.value));
-  for (const prefix of [
-    "kept:demo-source:",
-    "kept:demo-reply:",
-    "kept:demo-inbox:",
-    "kept:demo-work-ready:",
-    "kept:demo-plan-restored:",
-    "kept:source:",
-  ])
-    for (const m of await byPrefix(prefix)) await kvs.delete(m.key);
-  return { removed };
+    if (!response.ok && response.status !== 404)
+      throw new Error(
+        `Demo request ${key} could not be deleted (HTTP ${response.status}). Its retry markers have been retained.`,
+      );
+    const marker = m.key.slice("kept:demo-source:".length);
+    for (const prefix of [
+      "kept:demo-source:",
+      "kept:demo-reply:",
+      "kept:demo-inbox:",
+    ])
+      await kvs.delete(`${prefix}${marker}`);
+    for (const ref of await byPrefix(`kept:source:${key}:`))
+      await kvs.delete(ref.key);
+  }
+  const protectedProjects = new Set<string>();
+  for (const m of await byPrefix("kept:demo-work:")) {
+    const key = String(m.value);
+    const marker = m.key.slice("kept:demo-work:".length);
+    if (protectedWork.has(key)) {
+      protectedProjects.add(marker.split(":")[0]!);
+      continue;
+    }
+    await kvs.entity("work").delete(key);
+    await kvs.delete(`kept:demo-work-ready:${marker}`);
+  }
+  for (const m of await byPrefix("kept:demo-plan-restored:"))
+    if (!protectedProjects.has(m.key.slice("kept:demo-plan-restored:".length)))
+      await kvs.delete(m.key);
+  await kvs.delete("kept:graph-status");
+  return {
+    removed,
+    preserved: records.filter((r) => r.record && !r.record.data.synthetic)
+      .length,
+  };
 }

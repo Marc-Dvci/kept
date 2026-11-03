@@ -116,11 +116,17 @@ export async function onPlanningChanged(event: {
   if (id === undefined)
     throw new Error("A planning event identifier is required");
   const keys = new Set<string>();
+  const snapshots = new Map<
+    string,
+    Awaited<ReturnType<typeof store.readWorkSnapshot>>
+  >();
   for (const promiseId of await store.keys()) {
     const record = await store.read(promiseId);
     if (!record || record.data.delivery || record.data.cancellation) continue;
     for (const key of record.data.workKeys) {
-      const stored = await store.readWorkSnapshot(key);
+      if (!snapshots.has(key))
+        snapshots.set(key, await store.readWorkSnapshot(key));
+      const stored = snapshots.get(key);
       if (
         (event.version &&
           stored?.data.versions.some((v) => v.id === String(id))) ||

@@ -2,7 +2,7 @@
 
 ![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
-![Unit tests](https://img.shields.io/badge/unit_tests-121_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
+![Unit tests](https://img.shields.io/badge/unit_tests-128_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
 **Kept turns the dates that support agents promise in Jira Service Management replies into tracked commitments,
 ties each one to the Jira work and release that must deliver it, and alerts the owner when a release moves, so the
@@ -51,7 +51,7 @@ same site. The demo customers, people and replies are fictional.
 7. On a promise, **Record customer delivery**, **Agreed date change** and **Export evidence bundle** complete the
    record. Connect the Teamwork Graph connector in admin.atlassian.com (**Connected apps > Kept > View app
    details > Connections**) and click **Sync synthetic graph documents** in **Workspace settings**. **Reset the
-   demo** deletes the demo promises and requests so the scenario can be played again.
+   demo** removes synthetic promises and unused requests; retained confirmations keep their sources and plans.
 
 Full steps: [docs/SETUP.md](docs/SETUP.md).
 
@@ -107,8 +107,7 @@ flowchart LR
 ```
 
 - **Captured from the agent's own words.** Public replies in the watched support projects become proposals. Kept
-  checks that the comment is public and that its author is an agent (from the account type in Jira), so a
-  customer's own comment never becomes a promise. A release name or a quarter in place of a date is flagged for
+  checks that the comment is public, the author is a regular Atlassian account, and the administrator has approved that author for the service project. Unapproved authors and portal-only customers are refused. A release name or a quarter in place of a date is flagged for
   review. An edited reply must be reviewed again before confirmation.
 - **Tied to the work.** Each promise lists the Jira work it needs. Kept reads each item's fix version and release
   date, sprint, status and Flagged field, and assigns On track, At risk, Needs evidence, Broken or Kept, with the
@@ -140,7 +139,7 @@ Code computes every proposal, state and alert. There is no model in the decision
 | Check | Result | Reproduce |
 |---|---|---|
 | Labelled forecast cases | 36/36: 24 written before the engine, 12 kept apart until it was complete | `npm run eval` |
-| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 121 passing | `npm test` |
+| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 128 passing | `npm test` |
 | Type check, production build, Forge manifest validation | clean | `npm run audit` |
 
 ### Run live
@@ -164,7 +163,7 @@ Production install on marc-dvci.atlassian.net, 2 November 2026: software project
 
 | Claim | Code | Test |
 |---|---|---|
-| A customer's own comment is never a promise | `src/forge/jira.ts` | `jira.test.ts` "rejects the customer's own comment as an outgoing commitment" |
+| Only project-approved support authors can supply a promise | `src/forge/jira.ts` | `support-authors.test.ts` (unapproved licensed users, project boundaries and portal customers) |
 | Internal comments are refused | `src/forge/jira.ts`, `src/core/capture.ts` | "rejects an internal support reply before retaining its body", "refuses internal comments" |
 | A quarter never becomes an exact date | `src/core/capture.ts` | "does not invent an exact quarter date" |
 | A release without a date needs review | `src/core/capture.ts` | "requires a review for a version without a release date" |
