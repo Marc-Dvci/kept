@@ -16,10 +16,10 @@ In **Workspace settings**, under **Load the demo**:
 
 1. Choose the software project as **Delivery work project**.
 2. Choose the service project as **Support project (Jira Service Management)**.
-3. Click **Load synthetic demo**.
+3. Click **Load the demo**.
 
 Kept creates the releases Atlas 2.7 (released), Atlas 2.8 and Atlas 2.9, five delivery work items, and a JSM
-request from each of six fictional customer organisations, each answered by an agent's public reply with a date.
+request from each of six customer organisations, each answered by an agent's public reply with a date.
 The demo dates are set relative to the day you load it, so Atlas 2.8 always falls four days later. Eight promises
 are confirmed and three replies wait in the **Capture inbox**. The loader also finds the site's Sprint and Flagged
 fields and adds the service project to the watched support projects.
@@ -28,7 +28,7 @@ Forge resolvers stop at 25 seconds, so the loader works in steps: each call reco
 calls again until the demo is complete. On the production site, loading the full demo took 37.7 to 41.5 s and
 **Reset the demo** 13.4 s.
 
-**Reset the demo** removes synthetic promises and unused demo support requests. Promises confirmed through the real capture flow are retained, with their source requests and delivery plans. Unrelated live inbox references are preserved. Jira deletion failures retain retry markers. Atlas work items and releases stay; the next load restores only plans that are not protecting retained promises.
+**Reset the demo** removes the demo promises and unused demo support requests. Promises confirmed through the real capture flow are retained, with their source requests and delivery plans. Unrelated live inbox references are preserved. Jira deletion failures retain retry markers. Atlas work items and releases stay; the next load restores only plans that are not protecting retained promises.
 
 ## Capture promises from replies
 
@@ -100,8 +100,8 @@ on a promise drafts a factual message from the Jira evidence to review and copy 
 ## Teamwork Graph
 
 An organisation admin connects the connector in admin.atlassian.com: **Connected apps > Kept > View app details >
-Connections**, then **Connect** under "Teamwork Graph connectors". In **Workspace settings**, **Sync synthetic graph
-documents** writes the demo promises to Teamwork Graph as documents with the customer, the promise, the agreed
+Connections**, then **Connect** under "Teamwork Graph connectors". In **Workspace settings**, **Sync demo promises to
+Teamwork Graph** writes the demo promises to Teamwork Graph as documents with the customer, the promise, the agreed
 date, the linked Jira work and the source link, and checks each item's ingestion result. Graph documents are
 visible across the workspace, so promises confirmed from live customer replies stay in Forge storage under Jira
 permissions.

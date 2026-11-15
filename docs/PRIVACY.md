@@ -21,7 +21,7 @@ customer replies stay in Forge storage.
 
 Reply references found by the comment trigger expire after 30 days; confirmed promise evidence has separate
 retention. Exported evidence files are under the downloading user's control. The offline preview (`npm run dev`)
-uses fictional organisations and keeps its records in the visitor's browser.
+runs the Atlas demo and keeps its records in the visitor's browser.
 
 The installing organisation determines lawful retention, access, source correction, backup, deletion and app
 removal. For support, open an issue in the project's GitHub issue tracker; do not include sensitive records in a

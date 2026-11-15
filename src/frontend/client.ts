@@ -112,7 +112,7 @@ export async function bootstrap(): Promise<Workspace> {
       return data;
     } catch {
       throw new Error(
-        "Saved replay evidence is inconsistent or unreadable. It has been preserved. Use Settings to reset the synthetic workspace.",
+        "Saved replay evidence is inconsistent or unreadable. It has been preserved. Use Settings to reset the workspace.",
       );
     }
   }
@@ -226,7 +226,7 @@ export async function confirmPromise(
     return { ...data, focusedId: id };
   });
 }
-export async function applySyntheticPlan(
+export async function applyDemoPlan(
   change: PlanChange,
   version: number,
   generation: string,
@@ -298,7 +298,7 @@ export async function loadSource(
   commentId: string,
 ): Promise<InboxSource> {
   if (!isForge)
-    throw new Error("Use the synthetic reply editor in replay mode");
+    throw new Error("Use the reply editor in replay mode");
   return invoke<InboxSource>("source", { issueKey: issue, commentId });
 }
 export async function loadMoreSources(cursor: string) {

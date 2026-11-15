@@ -36,7 +36,7 @@ const result = {
   failures,
   hashes,
   scope:
-    "Authored synthetic forecast conformance cases, not a blind accuracy or customer-impact study.",
+    "Labelled forecast cases: 24 written before the engine, 12 held out until it was complete.",
 };
 await writeFile(
   "eval/reports/forecast.json",

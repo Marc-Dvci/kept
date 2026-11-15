@@ -523,7 +523,7 @@ function App() {
               <small>
                 {app?.mode === "forge"
                   ? "Promises across projects"
-                  : "Fictional product team"}
+                  : "The Atlas product team"}
               </small>
             </span>
           </div>
@@ -612,7 +612,7 @@ function App() {
             <div className="top-right">
               <span className="mode">
                 <i />
-                {app?.mode === "forge" ? "FORGE SITE" : "SYNTHETIC REPLAY"}
+                {app?.mode === "forge" ? "FORGE SITE" : "BROWSER REPLAY"}
               </span>
               <span className="today">
                 {app ? timeText(app.now) : "Loading"} <small>PARIS</small>
@@ -1294,7 +1294,7 @@ function App() {
                       <p>
                         {client.isForge
                           ? "The server reads the source under your Atlassian permissions."
-                          : "Use fictional text. This stays in your browser and calls no external service."}
+                          : "Paste or write a reply. It stays in this browser."}
                       </p>
                     </div>
                     <form
@@ -1570,7 +1570,7 @@ function App() {
                         >
                           {client.isForge
                             ? "Review next step"
-                            : "Apply synthetic plan"}{" "}
+                            : "Apply plan change"}{" "}
                           <Icon name="arrow" />
                         </button>
                       </div>
@@ -1704,7 +1704,7 @@ function App() {
                 <span>
                   <i />
                   {app.mode === "replay"
-                    ? "Fictional customers. Browser-local evidence. No customer messages sent."
+                    ? "The Atlas team. Evidence saved in this browser."
                     : "Permission-scoped promises. Reviewed delivery evidence."}
                 </span>
                 <span>
@@ -2193,7 +2193,7 @@ function App() {
       )}
       {modal === "apply-plan" && impact && app && (
         <Modal
-          title="Apply the synthetic planning change"
+          title="Apply the planning change"
           close={close}
           error={error}
         >
@@ -2212,7 +2212,7 @@ function App() {
               onClick={() =>
                 void task(async () => {
                   setApp(
-                    await client.applySyntheticPlan(
+                    await client.applyDemoPlan(
                       change,
                       app.version,
                       app.generation,
@@ -2220,12 +2220,12 @@ function App() {
                   );
                   close();
                   setNotice(
-                    "Synthetic planning change applied. Open Activity to review the affected promise owners.",
+                    "Planning change applied. Open Activity to review the affected promise owners.",
                   );
                 })
               }
             >
-              Confirm synthetic change
+              Confirm the change
             </button>
           </div>
         </Modal>
@@ -2235,8 +2235,8 @@ function App() {
           {client.isForge ? (
             <>
               <p>
-                Jira administrator permission is required. Live configuration
-                and synthetic demo seeding use your site permissions.
+                Jira administrator permission is required. Configuration and
+                the demo loader use your site permissions.
               </p>
               <form
                 onSubmit={(e) => {
@@ -2383,17 +2383,17 @@ function App() {
                     }
                     if (!completed)
                       throw new Error(
-                        "Demo setup is still in progress. Click Load synthetic demo again to resume safely.",
+                        "The demo is still loading. Click Load the demo again to continue.",
                       );
                     await refresh();
                     close();
                     setNotice(
-                      "Synthetic demo records created in the selected Jira project.",
+                      "Demo loaded in the selected Jira projects.",
                     );
                   })
                 }
               >
-                Load synthetic demo
+                Load the demo
               </button>
               <button
                 className="secondary"
@@ -2425,21 +2425,21 @@ function App() {
                     );
                     await refresh();
                     setNotice(
-                      `${result.accepted} synthetic promise documents accepted by Teamwork Graph.`,
+                      `${result.accepted} promise documents accepted by Teamwork Graph.`,
                     );
                     close();
                   })
                 }
               >
-                Sync synthetic graph documents
+                Sync demo promises to Teamwork Graph
               </button>
             </>
           ) : (
             <>
               <p>
-                This workspace uses fictional customers and a fixed Paris clock.
-                Evidence is saved only in this browser. Install the Forge app to
-                use your Jira work and public service-project replies.
+                This workspace runs the Atlas team on a fixed Paris clock, with
+                evidence saved in this browser. Install the Forge app to use
+                your Jira work and public service-project replies.
               </p>
               <div className="settings-row">
                 <div>
@@ -2492,7 +2492,7 @@ function App() {
               </div>
               <div className="settings-row">
                 <div>
-                  <strong>Reset synthetic workspace</strong>
+                  <strong>Reset the workspace</strong>
                   <small>
                     Restore the original eight promises and remove local edits.
                   </small>
@@ -2505,7 +2505,7 @@ function App() {
                       setApp(await client.reset());
                       setSelected("KPT-001");
                       close();
-                      setNotice("The synthetic workspace has been reset.");
+                      setNotice("The workspace has been reset.");
                     })
                   }
                 >

@@ -2,13 +2,14 @@
 
 ![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
-![Unit tests](https://img.shields.io/badge/unit_tests-128_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
+[![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-128_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
 **Kept turns the dates that support agents promise in Jira Service Management replies into tracked commitments,
 ties each one to the Jira work and release that must deliver it, and alerts the owner when a release moves, so the
 customer hears it from support before the date passes.**
 
-I audit for a living. Every promise in Kept has an owner, a source and delivery evidence.
+In the audits I worked on, every commitment needed an owner, a source and evidence that it was met. Kept gives
+each customer promise all three.
 
 | | |
 |---|---|
@@ -31,11 +32,11 @@ I audit for a living. Every promise in Kept has an owner, a source and delivery 
 ## See it work
 
 You need, as a Jira administrator, a Jira software project and a Jira Service Management service project on the
-same site. The demo customers, people and replies are fictional.
+same site.
 
 1. Install with the installation link above. Open **Apps > Kept**, then **Workspace settings** in Kept's sidebar.
    Under **Load the demo**, choose the software project as **Delivery work project** and the service project as
-   **Support project (Jira Service Management)**, then click **Load synthetic demo**. Kept creates the Atlas
+   **Support project (Jira Service Management)**, then click **Load the demo**. Kept creates the Atlas
    releases, five delivery work items, and JSM requests from six customer organisations answered by public replies.
 2. The **Promise register** shows 8 confirmed promises across 6 organisations, each with its state, owner, agreed
    date, the agent's original words and the work behind it.
@@ -50,8 +51,8 @@ same site. The demo customers, people and replies are fictional.
    promises depend on" it.
 7. On a promise, **Record customer delivery**, **Agreed date change** and **Export evidence bundle** complete the
    record. Connect the Teamwork Graph connector in admin.atlassian.com (**Connected apps > Kept > View app
-   details > Connections**) and click **Sync synthetic graph documents** in **Workspace settings**. **Reset the
-   demo** removes synthetic promises and unused requests; retained confirmations keep their sources and plans.
+   details > Connections**) and click **Sync demo promises to Teamwork Graph** in **Workspace settings**. **Reset
+   the demo** plays the scenario again; promises you confirmed keep their sources and plans.
 
 Full steps: [docs/SETUP.md](docs/SETUP.md).
 
@@ -92,20 +93,6 @@ release dates decide whether they are kept.
 
 ![Jira modules and events call Forge functions; one deterministic core with no model writes promises, alerts and graph documents](docs/images/architecture.png)
 
-```mermaid
-flowchart LR
-  R[Public JSM reply] --> P[Proposal in the Capture inbox]
-  P --> C[Agent confirms customer, owner, date, work]
-  C --> K[Promise with the original words]
-  J[Jira releases, sprints, status, Flagged] --> A[Deterministic assessment]
-  K --> A
-  V[Version, sprint and issue events] --> A
-  A --> O[Owner alert in Activity]
-  O --> U[Reviewed customer update]
-  E[Delivery evidence] --> K
-  K --> G[Teamwork Graph documents]
-```
-
 - **Captured from the agent's own words.** Public replies in the watched support projects become proposals. Kept
   checks that the comment is public, the author is a regular Atlassian account, and the administrator has approved that author for the service project. Unapproved authors and portal-only customers are refused. A release name or a quarter in place of a date is flagged for
   review. An edited reply must be reviewed again before confirmation.
@@ -120,8 +107,8 @@ flowchart LR
 - **Closed by evidence.** Jira Done does not close a promise. Customer delivery needs a time, an evidence link and
   a note; an agreed new date keeps the original date and its outcome in the history.
 - **In the graph.** The demo promises sync to Teamwork Graph through a Forge graph connector, with the customer,
-  date, linked work and source link. Graph documents are workspace-visible, so promises confirmed from live customer
-  replies stay in Forge storage under Jira permissions.
+  date, linked work and source link. Promises confirmed from live customer replies stay in Forge storage, under Jira
+  permissions.
 
 Code computes every proposal, state and alert. There is no model in the decision.
 
@@ -139,7 +126,9 @@ Code computes every proposal, state and alert. There is no model in the decision
 | Check | Result | Reproduce |
 |---|---|---|
 | Labelled forecast cases | 36/36: 24 written before the engine, 12 kept apart until it was complete | `npm run eval` |
-| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 128 passing | `npm test` |
+| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 128 passing, in random order | `npm test` |
+| Decision core coverage (`src/core`) | 91.6 % of lines, 86.3 % of branches | `npm run coverage` |
+| Browser workflows on the replay, with axe-core accessibility checks | 15 passing | `npm run test:browser` |
 | Type check, production build, Forge manifest validation | clean | `npm run audit` |
 
 ### Run live
@@ -193,9 +182,10 @@ npm run deploy        # vite build + forge deploy -e production
 forge install -e production
 ```
 
-For an offline preview, `npm run dev` runs the same engine in the browser with the fictional Atlas team.
+For an offline preview, `npm run dev` runs the same engine in the browser with the Atlas demo team, or open the
+[replay](https://marc-dvci.github.io/kept/).
 
 `src/core` holds capture, assessment, drafts and the evidence ledger; `src/forge` the platform adapters and demo
 loader; `src/frontend` the app; `eval` the labelled cases. [Evidence verification](docs/EVIDENCE.md),
-[privacy](docs/PRIVACY.md), [terms](docs/TERMS.md) and [sources](docs/SOURCES.md). Date recognition reads English
-replies, and every proposal waits for a person to confirm it. MIT licensed.
+[privacy](docs/PRIVACY.md), [terms](docs/TERMS.md) and [sources](docs/SOURCES.md). Every proposal waits for a
+person to confirm it. MIT licensed.

@@ -85,9 +85,9 @@ test("preview a shared release move, apply it and review internal alerts", async
     "3 customers renew within 60 days",
   );
   await page
-    .getByRole("button", { name: "Apply synthetic plan", exact: true })
+    .getByRole("button", { name: "Apply plan change", exact: true })
     .click();
-  await page.getByRole("button", { name: "Confirm synthetic change" }).click();
+  await page.getByRole("button", { name: "Confirm the change" }).click();
   await page.getByRole("button", { name: /^Activity/ }).click();
   await expect(page.locator(".alert-row")).toHaveCount(3);
   await expect(
@@ -283,13 +283,13 @@ test("accessibility across each section and all action dialogs", async ({
     .getByRole("button", { name: "Change impact", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Apply synthetic plan", exact: true })
+    .getByRole("button", { name: "Apply plan change", exact: true })
     .click();
   const planCheck = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   reports.push({
-    section: "Confirm synthetic change",
+    section: "Confirm the change",
     violations: planCheck.violations,
   });
   await mkdir("eval/reports", { recursive: true });
@@ -330,7 +330,7 @@ test("mobile views fit the page and settings can reset or advance the replay", a
     .click();
   await page.getByRole("button", { name: "Reset replay" }).click();
   await expect(
-    page.getByText(/synthetic workspace has been reset/),
+    page.getByText(/workspace has been reset/),
   ).toBeVisible();
 });
 test("standalone replay uses no external services and rejects injected instructions", async ({
@@ -366,9 +366,9 @@ test("find a missed promise and focus the owner's unreviewed queue", async ({
     .getByRole("button", { name: "Change impact", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Apply synthetic plan", exact: true })
+    .getByRole("button", { name: "Apply plan change", exact: true })
     .click();
-  await page.getByRole("button", { name: "Confirm synthetic change" }).click();
+  await page.getByRole("button", { name: "Confirm the change" }).click();
   await page.getByRole("button", { name: /^Activity/ }).click();
   await page
     .getByLabel("Follow-up owner", { exact: true })

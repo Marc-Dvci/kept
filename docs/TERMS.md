@@ -11,4 +11,4 @@ Kept does not replace the organisation's approval policy.
 All customer communication uses the organisation's own channel after review. Customer delivery is distinct from
 Jira task completion.
 
-Atlassian platform and Teamwork Graph connector terms apply to installed versions. The demo data is fictional.
+Atlassian platform and Teamwork Graph connector terms apply to installed versions.

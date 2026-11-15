@@ -52,7 +52,7 @@ describe("public reply proposals", () => {
     expect(c.precision).toBe("quarter");
     expect(c.review.some((r) => /Tentative/.test(r))).toBe(true);
   });
-  it("does not pick one of several different dates silently", () =>
+  it("leaves the date for review when a reply names two different dates", () =>
     expect(
       parse("We will deliver between 2026-11-06 and 2026-11-13.")[0]?.dueOn,
     ).toBeNull());

@@ -8,15 +8,15 @@ export function documents(
 ): types.DocumentObject[] {
   if (promises.some((p) => !p.synthetic))
     throw new Error(
-      "Graph ingestion is restricted to explicitly synthetic demonstration promises",
+      "Teamwork Graph sync covers the demo promises",
     );
   return promises.map((p) => ({
     schemaVersion: "1.0",
     id: `kept-${p.id}`,
     updateSequenceNumber: Date.parse(now),
-    displayName: `${p.customer.name}: ${p.title} · synthetic promise`,
+    displayName: `${p.customer.name}: ${p.title} · Kept demo promise`,
     description:
-      "Fictional Kept demonstration; no customer communication or regulated data.",
+      "Kept demo promise: customer, agreed date, linked Jira work and source reply.",
     url: p.source.url,
     createdAt: p.confirmedAt,
     lastUpdatedAt: now,
@@ -31,9 +31,9 @@ export function documents(
       type: { category: "DOCUMENT", mimeType: "text/plain" },
       content: {
         mimeType: "text/plain",
-        text: `SYNTHETIC DEMONSTRATION. ${p.customer.name} was promised ${p.title} by ${p.dueOn}. Linked Jira work: ${p.workKeys.join(", ")}. Source: ${p.source.url}.`,
+        text: `Kept demo promise. ${p.customer.name} was promised ${p.title} by ${p.dueOn}. Linked Jira work: ${p.workKeys.join(", ")}. Source: ${p.source.url}.`,
       },
-      labels: ["kept", "synthetic", "customer-promise"],
+      labels: ["kept", "demo", "customer-promise"],
     },
   }));
 }
@@ -48,7 +48,7 @@ export async function sync(promises: PromiseRecord[], now: string) {
     objects: documents(promises, now),
   });
   if (!result.success || (result.results?.rejected?.length ?? 0) > 0)
-    throw new Error("Teamwork Graph rejected one or more synthetic documents");
+    throw new Error("Teamwork Graph rejected one or more promise documents");
   const status = { accepted: result.results?.accepted?.length ?? 0, at: now };
   await kvs.set("kept:graph-status", status);
   return status;
