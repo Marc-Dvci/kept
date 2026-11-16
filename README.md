@@ -1,6 +1,8 @@
 # Kept: customer promises tied to the Jira work that delivers them
 
-![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
+[![Watch the 2:22 film: Kept on a live Jira site](docs/images/film-thumbnail.jpg)](https://youtu.be/AAQpIiXthYw)
+
+**[Watch the film on YouTube (2:22)](https://youtu.be/AAQpIiXthYw)**
 
 [![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-131_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
@@ -23,13 +25,15 @@ each customer promise all three.
 
 | Criterion | Where to look |
 |---|---|
-| Technological implementation | [`manifest.yml`](manifest.yml) (issue panel, global page, two admin pages, triggers on issue, comment, version and sprint events, KVS custom entities, Teamwork Graph connector), [`src/index.ts`](src/index.ts) resolvers, [`src/forge/`](src/forge) (access, Jira and JSM, events, storage, graph, demo), [live run](#run-live) |
-| Design | [See it work](#see-it-work), [the app](src/frontend/main.tsx) |
+| Technological implementation | [`manifest.yml`](https://github.com/Marc-Dvci/kept/blob/v1.0.0/manifest.yml) (issue panel, global page, two admin pages, triggers on issue, comment, version and sprint events, KVS custom entities, Teamwork Graph connector), [`src/index.ts`](https://github.com/Marc-Dvci/kept/blob/v1.0.0/src/index.ts) resolvers, [`src/forge/`](https://github.com/Marc-Dvci/kept/blob/v1.0.0/src/forge) (access, Jira and JSM, events, storage, graph, demo), [live run](#run-live) |
+| Design | [See it work](#see-it-work), [the app](https://github.com/Marc-Dvci/kept/blob/v1.0.0/src/frontend/main.tsx) |
 | Potential impact | [The problem](#the-problem): only 13% of customers reported receiving any proactive customer service |
 | Innovation | [How it works](#how-it-works): promises captured from the agent's own words, tied to Jira releases, re-assessed by Jira's own events |
-| Presentation | [Evidence](#evidence), [claims](#claims), [sources](docs/SOURCES.md) |
+| Presentation | [Evidence](#evidence), [claims](#claims), [sources](https://github.com/Marc-Dvci/kept/blob/v1.0.0/docs/SOURCES.md) |
 
 ## See it work
+
+![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
 You need, as a Jira administrator, a Jira software project and a Jira Service Management service project on the
 same site.
