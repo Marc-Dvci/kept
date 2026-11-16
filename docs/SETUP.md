@@ -25,8 +25,8 @@ are confirmed and three replies wait in the **Capture inbox**. The loader also f
 fields and adds the service project to the watched support projects.
 
 Forge resolvers stop at 25 seconds, so the loader works in steps: each call records what it created and the page
-calls again until the demo is complete. On the production site, loading the full demo took 37.7 to 41.5 s and
-**Reset the demo** 13.4 s.
+calls again until the demo is complete. On the production site, loading the full demo took 32.8 to 36.8 s and
+**Reset the demo** 14.4 to 15.9 s.
 
 **Reset the demo** removes the demo promises, including any you confirmed from a demo reply, and the demo support requests, so the scenario plays again from the start. Promises confirmed from your own service requests keep their source requests and delivery plans, and live inbox references stay. Atlas work items and releases stay; the next load restores their plans.
 

@@ -2,7 +2,7 @@
 
 ![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
-[![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-129_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
+[![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-131_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
 **Kept turns the dates that support agents promise in Jira Service Management replies into tracked commitments,
 ties each one to the Jira work and release that must deliver it, and alerts the owner when a release moves, so the
@@ -17,7 +17,7 @@ each customer promise all three.
 | Track | Codegeist 2026 · Apps for Business Teams |
 | Bonus | Best Teamwork Graph integration |
 | Built with | Forge (Custom UI, resolvers, triggers, KVS custom entities, `graph:connector`), Jira Service Management, Jira, Teamwork Graph, TypeScript, React, Temporal |
-| Headline result | On the live site, moving the Atlas 2.8 release date in Jira recorded four owner alerts in Kept within 22 s; confirming a promise from a real JSM reply takes 5.0 s; 36 of 36 labelled forecast cases |
+| Headline result | On the live site, moving the Atlas 2.8 release date in Jira recorded four owner alerts in Kept within 21 s; confirming a promise from a real JSM reply takes 5.0 s; 36 of 36 labelled forecast cases |
 
 ## For judges
 
@@ -58,11 +58,11 @@ Full steps: [docs/SETUP.md](docs/SETUP.md).
 
 | The reply in JSM | Capture inbox | Confirm the promise |
 |---|---|---|
-| ![A public agent reply in JSM promising the workspace export by 6 November 2026, tracked in ATL-1](docs/images/public-reply-in-jsm.png) | ![Proposals from public JSM replies; a release name or a quarter is flagged for review](docs/images/capture-inbox.png) | ![The agent confirms customer, owner, agreed date, timezone and Jira work](docs/images/confirm-promise.png) |
+| ![A public agent reply in JSM promising the workspace export by 20 November 2026, tracked in ATL-1](docs/images/public-reply-in-jsm.png) | ![Proposals from public JSM replies; a release name or a quarter is flagged for review](docs/images/capture-inbox.png) | ![The agent confirms customer, owner, agreed date, timezone and Jira work](docs/images/confirm-promise.png) |
 
 | Change impact | Owner alerts after the Jira move | On the work item |
 |---|---|---|
-| ![Four promises newly at risk before Atlas 2.8 moves a week](docs/images/change-impact.png) | ![Four owner alerts recorded in Kept after Atlas 2.8 moved to 13 November](docs/images/owner-alerts.png) | ![The Kept panel on ATL-1: 3 customer promises depend on ATL-1](docs/images/issue-panel.png) |
+| ![Four promises newly at risk before Atlas 2.8 moves a week](docs/images/change-impact.png) | ![Four owner alerts recorded in Kept after Atlas 2.8 moved to 27 November](docs/images/owner-alerts.png) | ![The Kept panel on ATL-1: 3 customer promises depend on ATL-1](docs/images/issue-panel.png) |
 
 | Delivery evidence | Teamwork Graph sync | Workspace settings |
 |---|---|---|
@@ -70,11 +70,11 @@ Full steps: [docs/SETUP.md](docs/SETUP.md).
 
 ## The problem
 
-![A support reply promises the workspace export by 6 November; Atlas 2.8 moves to 13 November, and nobody tells the customer](docs/images/problem.png)
+![A support reply promises the workspace export by 20 November; Atlas 2.8 moves to 27 November, and nobody tells the customer](docs/images/problem.png)
 
-A support agent answers a customer in Jira Service Management: "We will deliver the workspace export by 6
-November, tracked in ATL-1." Two days later, engineering moves the release that carries ATL-1 to 13 November. The
-release lives in Jira, the promise lives in a reply, and nothing connects them. The customer finds out on 6
+A support agent answers a customer in Jira Service Management: "We will deliver the workspace export by 20
+November, tracked in ATL-1." Two days later, engineering moves the release that carries ATL-1 to 27 November. The
+release lives in Jira, the promise lives in a reply, and nothing connects them. The customer finds out on 20
 November.
 
 Customers rarely hear first. In a Gartner survey of more than 6,000 customers, only 13% reported receiving any type
@@ -126,25 +126,25 @@ Code computes every proposal, state and alert. There is no model in the decision
 | Check | Result | Reproduce |
 |---|---|---|
 | Labelled forecast cases | 36/36: 24 written before the engine, 12 kept apart until it was complete | `npm run eval` |
-| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 129 passing, in random order | `npm test` |
+| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 131 passing, in random order | `npm test` |
 | Decision core coverage (`src/core`) | 91.6 % of lines, 86.3 % of branches | `npm run coverage` |
 | Browser workflows on the replay, with axe-core accessibility checks | 15 passing | `npm run test:browser` |
 | Type check, production build, Forge manifest validation | clean | `npm run audit` |
 
 ### Run live
 
-Production install on marc-dvci.atlassian.net, 2 November 2026: software project "Atlas" (ATL) and service project
+Production install on marc-dvci.atlassian.net, 16 November 2026: software project "Atlas" (ATL) and service project
 "Atlas Support" (SUP).
 
 | Action | Result | Time |
 |---|---|---|
-| Load the full demo | 8 confirmed promises across 6 organisations, 3 replies in the Capture inbox | 37.7 to 41.5 s |
-| Reset the demo | Demo promises and support requests deleted | 13.4 s |
-| Confirm a promise from a real JSM reply | Promise registered with its source, owner, date and work | 5.0 s |
+| Load the full demo | 8 confirmed promises across 6 organisations, 3 replies in the Capture inbox | 32.8 to 36.8 s |
+| Reset the demo | Demo promises and support requests deleted; the next load starts the scenario again | 14.4 to 15.9 s |
+| Confirm a promise from a real JSM reply | Promise registered with its source, owner, date and work | 5.0 to 6.0 s |
 | Preview a one-week move of Atlas 2.8 | 4 promises newly at risk, 5 customers in scope, 3 renewing within 60 days | |
-| Move Atlas 2.8 to 13 November in Jira | 4 owner alerts recorded in Kept | 13.5 to 21.9 s, including page reloads |
+| Move Atlas 2.8 from 20 to 27 November in Jira | 4 owner alerts recorded in Kept | 13.0 to 21.3 s, including page reloads |
 | Open the issue panel on ATL-1 | "3 customer promises depend on ATL-1" | |
-| Teamwork Graph sync | 8 demo promise documents accepted | 4.9 to 5.7 s |
+| Teamwork Graph sync | 8 demo promise documents accepted | 4.5 to 5.8 s |
 
 ![Kept in the Atlassian developer console: deployed to production, one installation, sharing on](docs/images/developer-console.png)
 

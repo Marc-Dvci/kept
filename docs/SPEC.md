@@ -61,7 +61,7 @@ storage and issue-change events. No customer message is sent by this app.
 
 The Atlas product team, six customer organisations, eight promises,
 five delivery work items and a support-capture inbox. The principal story moves
-the Atlas 2.8 plan from 6 to 13 November, surfaces the affected customers, and
+the Atlas 2.8 plan by one week, surfaces the affected customers, and
 records a reviewed delivery.
 
 ## Quality and boundaries
