@@ -512,32 +512,48 @@ async function byPrefix(prefix: string) {
 }
 
 /**
- * Reset only demo-owned state. A promise belongs to the demo when the loader made it or when it was confirmed from
- * a demo support request, so the scenario plays again from the start. Promises from other requests keep their
- * sources and plans.
+ * Reset only demo-owned state, so the scenario plays again from the start. A promise belongs to the demo when the
+ * loader made it, when it was confirmed from a demo support request, or when its source request no longer exists
+ * and all of its work is demo work. Promises from other requests keep their sources and plans.
  */
 export async function resetDemo() {
   let removed = 0;
   const demoSources = new Set(
     (await byPrefix("kept:demo-source:")).map((m) => String(m.value)),
   );
-  const isDemo = (record: Awaited<ReturnType<typeof read>>) =>
-    !record ||
-    record.data.synthetic ||
-    demoSources.has(record.data.source.issueKey);
-  const protectedSources = new Set<string>();
-  const protectedWork = new Set<string>();
-  const records = [];
+  const demoWork = new Set(
+    (await byPrefix("kept:demo-work:")).map((m) => String(m.value)),
+  );
+  const sourceGone = async (key: string) =>
+    (
+      await api
+        .asUser()
+        .requestJira(route`/rest/api/3/issue/${key}?fields=summary`)
+    ).status === 404;
+  const records: {
+    id: string;
+    record: Awaited<ReturnType<typeof read>>;
+    demo: boolean;
+  }[] = [];
   for (const id of await keys()) {
     const record = await read(id);
-    records.push({ id, record });
-    if (record && !isDemo(record)) {
+    const demo =
+      !record ||
+      record.data.synthetic ||
+      demoSources.has(record.data.source.issueKey) ||
+      (record.data.workKeys.every((key) => demoWork.has(key)) &&
+        (await sourceGone(record.data.source.issueKey)));
+    records.push({ id, record, demo });
+  }
+  const protectedSources = new Set<string>();
+  const protectedWork = new Set<string>();
+  for (const { record, demo } of records)
+    if (record && !demo) {
       protectedSources.add(record.data.source.issueKey);
       for (const key of record.data.workKeys) protectedWork.add(key);
     }
-  }
-  for (const { id, record } of records) {
-    if (!isDemo(record)) continue;
+  for (const { id, record, demo } of records) {
+    if (!demo) continue;
     await kvs.entity("promise").delete(id);
     await kvs.delete(`kept:index:${id}`);
     for (const key of record?.data.workKeys ?? [])
@@ -585,6 +601,6 @@ export async function resetDemo() {
   await kvs.delete("kept:graph-status");
   return {
     removed,
-    preserved: records.filter((r) => !isDemo(r.record)).length,
+    preserved: records.filter((r) => !r.demo).length,
   };
 }

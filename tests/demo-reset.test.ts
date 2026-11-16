@@ -90,7 +90,10 @@ beforeEach(() => {
 });
 it("keeps promises from other requests with their delivery plans and resets everything the demo owns", async () => {
   expect(await resetDemo()).toEqual({ removed: 2, preserved: 1 });
-  expect(mock.request).toHaveBeenCalledTimes(2);
+  expect(mock.request).toHaveBeenCalledTimes(3);
+  expect(mock.request).toHaveBeenCalledWith(
+    "/rest/api/3/issue/REAL-99?fields=summary",
+  );
   for (const key of ["SUP-1", "SUP-2"])
     expect(mock.request).toHaveBeenCalledWith(`/rest/api/3/issue/${key}`, {
       method: "DELETE",
@@ -109,6 +112,27 @@ it("keeps promises from other requests with their delivery plans and resets ever
     "work:ATL-2",
   ]);
   expect((await resetDemo()).removed).toBe(0);
+});
+it("resets a confirmation whose source request is gone and whose work is all demo work", async () => {
+  mock.request.mockImplementation(
+    async (path: string, init?: { method?: string }) =>
+      !init && path.startsWith("/rest/api/3/issue/REAL-99")
+        ? { ok: false, status: 404 }
+        : { ok: true, status: 204 },
+  );
+  expect(await resetDemo()).toEqual({ removed: 3, preserved: 0 });
+  expect(mock.records.size).toBe(0);
+  expect(mock.values.has("kept:demo-plan-restored:ATL")).toBe(false);
+});
+it("keeps a confirmation from a deleted request when it also tracks other work", async () => {
+  mock.request.mockImplementation(
+    async (_path: string, init?: { method?: string }) =>
+      init ? { ok: true, status: 204 } : { ok: false, status: 404 },
+  );
+  mock.records.get("KPT-confirmed").data.workKeys = ["ATL-1", "CORE-7"];
+  expect(await resetDemo()).toEqual({ removed: 2, preserved: 1 });
+  expect(mock.records.has("KPT-confirmed")).toBe(true);
+  expect(mock.values.has("kept:demo-plan-restored:ATL")).toBe(true);
 });
 it("resets a promise confirmed from a demo reply so the scenario plays again", async () => {
   mock.records.delete("KPT-confirmed");
