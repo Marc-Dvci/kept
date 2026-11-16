@@ -28,7 +28,7 @@ Forge resolvers stop at 25 seconds, so the loader works in steps: each call reco
 calls again until the demo is complete. On the production site, loading the full demo took 37.7 to 41.5 s and
 **Reset the demo** 13.4 s.
 
-**Reset the demo** removes the demo promises and unused demo support requests. Promises confirmed through the real capture flow are retained, with their source requests and delivery plans. Unrelated live inbox references are preserved. Jira deletion failures retain retry markers. Atlas work items and releases stay; the next load restores only plans that are not protecting retained promises.
+**Reset the demo** removes the demo promises, including any you confirmed from a demo reply, and the demo support requests, so the scenario plays again from the start. Promises confirmed from your own service requests keep their source requests and delivery plans, and live inbox references stay. Atlas work items and releases stay; the next load restores their plans.
 
 ## Capture promises from replies
 

@@ -2,7 +2,7 @@
 
 ![The Kept promise register in Jira: eight customer promises, their states, the original words and the work behind them](docs/images/promise-register.png)
 
-[![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-128_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
+[![CI](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-Dvci/kept/actions/workflows/ci.yml) ![Unit tests](https://img.shields.io/badge/unit_tests-129_passing-27735c) ![Cases](https://img.shields.io/badge/forecast_cases-36%2F36-27735c) ![Coverage](https://img.shields.io/badge/decision_core_coverage-92%25_lines-27735c) ![Licence](https://img.shields.io/badge/licence-MIT-24262c) ![Forge](https://img.shields.io/badge/Atlassian-Forge-0052CC)
 
 **Kept turns the dates that support agents promise in Jira Service Management replies into tracked commitments,
 ties each one to the Jira work and release that must deliver it, and alerts the owner when a release moves, so the
@@ -52,7 +52,7 @@ same site.
 7. On a promise, **Record customer delivery**, **Agreed date change** and **Export evidence bundle** complete the
    record. Connect the Teamwork Graph connector in admin.atlassian.com (**Connected apps > Kept > View app
    details > Connections**) and click **Sync demo promises to Teamwork Graph** in **Workspace settings**. **Reset
-   the demo** plays the scenario again; promises you confirmed keep their sources and plans.
+   the demo** plays the scenario again; promises confirmed from your own requests keep their sources and plans.
 
 Full steps: [docs/SETUP.md](docs/SETUP.md).
 
@@ -126,7 +126,7 @@ Code computes every proposal, state and alert. There is no model in the decision
 | Check | Result | Reproduce |
 |---|---|---|
 | Labelled forecast cases | 36/36: 24 written before the engine, 12 kept apart until it was complete | `npm run eval` |
-| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 128 passing, in random order | `npm test` |
+| Unit tests: capture, forecast, ledger, access, Jira adapter, events, graph, drafts | 129 passing, in random order | `npm test` |
 | Decision core coverage (`src/core`) | 91.6 % of lines, 86.3 % of branches | `npm run coverage` |
 | Browser workflows on the replay, with axe-core accessibility checks | 15 passing | `npm run test:browser` |
 | Type check, production build, Forge manifest validation | clean | `npm run audit` |

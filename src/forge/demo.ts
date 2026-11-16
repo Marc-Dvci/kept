@@ -511,22 +511,33 @@ async function byPrefix(prefix: string) {
   return out;
 }
 
-/** Reset only demo-owned state; retained promises keep their sources and plans. */
+/**
+ * Reset only demo-owned state. A promise belongs to the demo when the loader made it or when it was confirmed from
+ * a demo support request, so the scenario plays again from the start. Promises from other requests keep their
+ * sources and plans.
+ */
 export async function resetDemo() {
   let removed = 0;
+  const demoSources = new Set(
+    (await byPrefix("kept:demo-source:")).map((m) => String(m.value)),
+  );
+  const isDemo = (record: Awaited<ReturnType<typeof read>>) =>
+    !record ||
+    record.data.synthetic ||
+    demoSources.has(record.data.source.issueKey);
   const protectedSources = new Set<string>();
   const protectedWork = new Set<string>();
   const records = [];
   for (const id of await keys()) {
     const record = await read(id);
     records.push({ id, record });
-    if (record && !record.data.synthetic) {
+    if (record && !isDemo(record)) {
       protectedSources.add(record.data.source.issueKey);
       for (const key of record.data.workKeys) protectedWork.add(key);
     }
   }
   for (const { id, record } of records) {
-    if (record && !record.data.synthetic) continue;
+    if (!isDemo(record)) continue;
     await kvs.entity("promise").delete(id);
     await kvs.delete(`kept:index:${id}`);
     for (const key of record?.data.workKeys ?? [])
@@ -574,7 +585,6 @@ export async function resetDemo() {
   await kvs.delete("kept:graph-status");
   return {
     removed,
-    preserved: records.filter((r) => r.record && !r.record.data.synthetic)
-      .length,
+    preserved: records.filter((r) => !isDemo(r.record)).length,
   };
 }

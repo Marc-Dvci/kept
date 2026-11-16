@@ -54,6 +54,13 @@ beforeEach(() => {
   mock.records.set("KPT-confirmed", {
     data: {
       synthetic: false,
+      source: { issueKey: "REAL-99" },
+      workKeys: ["ATL-1"],
+    },
+  });
+  mock.records.set("KPT-from-demo-reply", {
+    data: {
+      synthetic: false,
       source: { issueKey: "SUP-1" },
       workKeys: ["ATL-1"],
     },
@@ -81,21 +88,34 @@ beforeEach(() => {
   mock.values.set("kept:demo-work-ready:ATL:ATL-251", true);
   mock.values.set("kept:demo-plan-restored:ATL", true);
 });
-it("preserves confirmed sources, real discovery and their delivery plans while deleting unused demo data", async () => {
-  expect(await resetDemo()).toEqual({ removed: 1, preserved: 1 });
-  expect(mock.request).toHaveBeenCalledTimes(1);
-  expect(mock.request).toHaveBeenCalledWith("/rest/api/3/issue/SUP-2", {
-    method: "DELETE",
-  });
-  expect(mock.values.has("kept:demo-source:ATL:101")).toBe(true);
+it("keeps promises from other requests with their delivery plans and resets everything the demo owns", async () => {
+  expect(await resetDemo()).toEqual({ removed: 2, preserved: 1 });
+  expect(mock.request).toHaveBeenCalledTimes(2);
+  for (const key of ["SUP-1", "SUP-2"])
+    expect(mock.request).toHaveBeenCalledWith(`/rest/api/3/issue/${key}`, {
+      method: "DELETE",
+    });
+  expect(mock.values.has("kept:demo-source:ATL:101")).toBe(false);
   expect(mock.values.has("kept:demo-source:ATL:001")).toBe(false);
   expect(mock.values.has("kept:source:REAL-99:5")).toBe(true);
-  expect(mock.values.has("kept:source:SUP-1:10")).toBe(true);
+  expect(mock.values.has("kept:source:SUP-1:10")).toBe(false);
   expect(mock.values.has("kept:source:SUP-2:10")).toBe(false);
   expect(mock.values.has("kept:demo-work-ready:ATL:ATL-248")).toBe(true);
   expect(mock.values.has("kept:demo-plan-restored:ATL")).toBe(true);
-  expect(mock.deleted).toEqual(["promise:KPT-ATL-001", "work:ATL-2"]);
+  expect(mock.records.has("KPT-confirmed")).toBe(true);
+  expect(mock.deleted).toEqual([
+    "promise:KPT-from-demo-reply",
+    "promise:KPT-ATL-001",
+    "work:ATL-2",
+  ]);
   expect((await resetDemo()).removed).toBe(0);
+});
+it("resets a promise confirmed from a demo reply so the scenario plays again", async () => {
+  mock.records.delete("KPT-confirmed");
+  expect(await resetDemo()).toEqual({ removed: 2, preserved: 0 });
+  expect(mock.records.size).toBe(0);
+  expect(mock.deleted).toContain("work:ATL-1");
+  expect(mock.values.has("kept:demo-plan-restored:ATL")).toBe(false);
 });
 it("retains retry and discovery markers when Jira refuses deletion", async () => {
   mock.request.mockResolvedValue({ ok: false, status: 403 });
